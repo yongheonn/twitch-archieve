@@ -183,7 +183,7 @@ const getPat = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
             }
             catch (e) {
                 delete info[id][vidId]["pat"];
-                winston_1.default.info("error", "PAT expiration time error, Change self.legacy_func to True", "ValueError: token_expire_time");
+                winston_1.default.error("error", "PAT expiration time error, Change self.legacy_func to True", "ValueError: token_expire_time");
                 //  self.legacy_func = True
                 errorCount++;
             }
@@ -194,7 +194,7 @@ const getPat = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     catch (e) {
-        winston_1.default.info("error: " + e);
+        winston_1.default.error("error: " + e);
         errorCount++;
     }
 });
@@ -269,8 +269,7 @@ const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* 
         }
     }
     catch (e) {
-        console.log("quality error: " + e);
-        winston_1.default.info("quality error: " + e);
+        winston_1.default.error("quality error: " + e);
         errorCount++;
     }
 });
@@ -389,8 +388,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     catch (e) {
-        console.info("error: " + e);
-        winston_1.default.info(" requests.exceptions.ConnectionError. Go back checking...  message: " + e);
+        winston_1.default.error(" requests.exceptions.ConnectionError. Go back checking...  message: " + e);
         errorCount++;
     }
 });
@@ -567,7 +565,7 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     }
     description += info[id][vidId].game.at(-1) + ": ~ final";
     const media = fs_1.default.createReadStream(root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts");
-    console.log(root_path + id + "\\" + info[id][vidId].fileName[0] + "_fianl.ts");
+    winston_1.default.info(root_path + id + "\\" + info[id][vidId].fileName[0] + "_fianl.ts");
     const oauth2Client = new googleapis_1.google.auth.OAuth2("1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com", "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", "http://localhost:3000/redirect");
     oauth2Client.credentials = {
         access_token: "ya29.a0AWY7Cknyh54tEVh_HYSdktHT5KRGjK01nrWJebzQAz5ZtoFZ__YELhVKRHslsyNsWjKCx6ylKOec08A17BYF9MugZyHijHGTfQlF2y3DOfpQHFMlWhcF7DvBTHEqAIRusZM0t80nGsKjLtuskGlRlf7fHycJaCgYKAdASARISFQG1tDrprCZKj9Q74vA1ABcfHI1cHA0163",
@@ -576,7 +574,6 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
         refresh_token: "1//0eAK6-oupNF8mCgYIARAAGA4SNwF-L9Irybu12BeFiGFbtC-lPI1MtxUzSlr4CjE23dYI9k1htp0z1KNoOgmuUXPcnq-K3ExqM_Y",
         expiry_date: 1683881797962,
     };
-    console.log(new Date(1683830005455).toLocaleString());
     const config = {
         auth: oauth2Client,
         part: ["snippet", "status"],
@@ -597,9 +594,9 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     winston_1.default.info("upload start ");
     youtube.videos.insert(config, (err, data) => {
         if (err)
-            console.log("err: " + err);
+            winston_1.default.error("err: " + err);
         else {
-            console.log("response: " + JSON.stringify(data));
+            winston_1.default.info("response: " + JSON.stringify(data));
             fs_1.default.unlink(root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
                 if (err)
                     throw err;
@@ -616,7 +613,7 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     winston_1.default.info("uploading ");
 });
 process.on("exit", (code) => {
-    console.log(`exit code : ${code}`);
+    winston_1.default.info(`exit code : ${code}`);
     revokeToken();
     if (code !== 0) {
         winston_1.default.info({
@@ -656,7 +653,7 @@ app.get("/redirect", function (req, res) {
 */
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log("Twitch auth sample listening on port 3000!");
+        winston_1.default.info("Twitch auth sample listening on port 3000!");
         for (const streamer of streamerIds)
             info[streamer] = {};
         yield getToken();

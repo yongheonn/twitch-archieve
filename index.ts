@@ -5,7 +5,6 @@ import { ChildProcess, spawn } from "child_process";
 import fs from "fs";
 import { google } from "googleapis";
 import { Credentials } from "google-auth-library";
-import { log } from "console";
 const youtube = google.youtube("v3");
 
 // Define our constants, you will change these with your own
@@ -230,7 +229,7 @@ const getPat = async (id: string, vidId: string) => {
         info[id][vidId]["pat"] = { token: access_token, expire: token_expire };
       } catch (e) {
         delete info[id][vidId]["pat"];
-        logger.info(
+        logger.error(
           "error",
           "PAT expiration time error, Change self.legacy_func to True",
           "ValueError: token_expire_time"
@@ -243,7 +242,7 @@ const getPat = async (id: string, vidId: string) => {
       return false;
     }
   } catch (e) {
-    logger.info("error: " + e);
+    logger.error("error: " + e);
     errorCount++;
   }
 };
@@ -322,8 +321,7 @@ const checkQuality = async (id: string, vidId: string) => {
       }
     }
   } catch (e) {
-    console.log("quality error: " + e);
-    logger.info("quality error: " + e);
+    logger.error("quality error: " + e);
     errorCount++;
   }
 };
@@ -474,8 +472,7 @@ const checkLive = async () => {
       );
     }
   } catch (e) {
-    console.info("error: " + e);
-    logger.info(
+    logger.error(
       " requests.exceptions.ConnectionError. Go back checking...  message: " + e
     );
     errorCount++;
@@ -682,7 +679,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
   const media = fs.createReadStream(
     root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts"
   );
-  console.log(
+  logger.info(
     root_path + id + "\\" + info[id][vidId].fileName[0] + "_fianl.ts"
   );
 
@@ -702,7 +699,6 @@ const youtubeUpload = async (id: string, vidId: string) => {
     expiry_date: 1683881797962,
   } as Credentials;
 
-  console.log(new Date(1683830005455).toLocaleString());
   const config = {
     auth: oauth2Client,
     part: ["snippet", "status"],
@@ -722,9 +718,9 @@ const youtubeUpload = async (id: string, vidId: string) => {
   };
   logger.info("upload start ");
   youtube.videos.insert(config, (err: any, data: any) => {
-    if (err) console.log("err: " + err);
+    if (err) logger.error("err: " + err);
     else {
-      console.log("response: " + JSON.stringify(data));
+      logger.info("response: " + JSON.stringify(data));
       fs.unlink(
         root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts",
         (err) => {
@@ -747,7 +743,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
 };
 
 process.on("exit", (code) => {
-  console.log(`exit code : ${code}`);
+  logger.info(`exit code : ${code}`);
   revokeToken();
 
   if (code !== 0) {
@@ -789,7 +785,7 @@ app.get("/redirect", function (req, res) {
 });
 */
 app.listen(3000, async function () {
-  console.log("Twitch auth sample listening on port 3000!");
+  logger.info("Twitch auth sample listening on port 3000!");
 
   for (const streamer of streamerIds) info[streamer] = {};
   await getToken();
