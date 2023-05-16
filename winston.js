@@ -3,42 +3,55 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_root_path_1 = __importDefault(require("app-root-path")); // app root 경로를 가져오는 lib
 const winston_1 = __importDefault(require("winston")); // winston lib
+const winston_daily_rotate_file_1 = __importDefault(require("winston-daily-rotate-file")); // winston lib
 const process_1 = __importDefault(require("process"));
 const { combine, timestamp, label, printf } = winston_1.default.format;
-const myFormat = printf(({ level, message, label, timestamp }) => {
-    return `${timestamp} [${label}] ${level}: ${message}`; // log 출력 포맷 정의
+const logDir = `${process_1.default.cwd()}/logs`;
+const logFormat = printf(({ level, message, label, timestamp }) => {
+    return `${timestamp} [${label}] ${level}: ${message}`; // 날짜 [시스템이름] 로그레벨 메세지
 });
-const options = {
-    // log파일
-    file: {
-        level: "info",
-        filename: `${app_root_path_1.default}/logs/winston-test.log`,
-        handleExceptions: true,
-        json: false,
-        maxsize: 5242880,
-        maxFiles: 5,
-        colorize: false,
-        format: combine(label({ label: "winston-test" }), timestamp(), myFormat // log 출력 포맷
-        ),
-    },
-    // 개발 시 console에 출력
-    console: {
-        level: "debug",
-        handleExceptions: true,
-        json: false,
-        colorize: true,
-        format: combine(label({ label: "nba_express" }), timestamp(), myFormat),
-    },
-};
 let logger = winston_1.default.createLogger({
+    format: combine(timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), label({ label: "Winston 연습 어플리케이션" }), // 어플리케이션 이름
+    logFormat // log 출력 포맷
+    //? format: combine() 에서 정의한 timestamp와 label 형식값이 logFormat에 들어가서 정의되게 된다. level이나 message는 콘솔에서 자동 정의
+    ),
     transports: [
-        new winston_1.default.transports.File(options.file), // 중요! 위에서 선언한 option으로 로그 파일 관리 모듈 transport
+        //* info 레벨 로그를 저장할 파일 설정 (info: 2 보다 높은 error: 0 와 warn: 1 로그들도 자동 포함해서 저장)
+        new winston_daily_rotate_file_1.default({
+            level: "info",
+            datePattern: "YYYY-MM-DD",
+            dirname: logDir,
+            filename: `%DATE%.log`,
+            maxFiles: 30,
+            zippedArchive: true, // 아카이브된 로그 파일을 gzip으로 압축할지 여부
+        }),
+        //* error 레벨 로그를 저장할 파일 설정 (info에 자동 포함되지만 일부러 따로 빼서 설정)
+        new winston_daily_rotate_file_1.default({
+            level: "error",
+            datePattern: "YYYY-MM-DD",
+            dirname: logDir + "/error",
+            filename: `%DATE%.error.log`,
+            maxFiles: 30,
+            zippedArchive: true,
+        }),
     ],
-    exitOnError: false,
+    exceptionHandlers: [
+        new winston_daily_rotate_file_1.default({
+            level: "error",
+            datePattern: "YYYY-MM-DD",
+            dirname: logDir,
+            filename: `%DATE%.exception.log`,
+            maxFiles: 30,
+            zippedArchive: true,
+        }),
+    ],
 });
 if (process_1.default.env.NODE_ENV !== "production") {
-    logger.add(new winston_1.default.transports.Console(options.console)); // 개발 시 console로도 출력
+    logger.add(new winston_1.default.transports.Console({
+        format: winston_1.default.format.combine(winston_1.default.format.colorize(), // log level별로 색상 적용하기
+        winston_1.default.format.simple() // `${info.level}: ${info.message} JSON.stringify({ ...rest })` 포맷으로 출력
+        ),
+    }));
 }
 exports.default = logger;
