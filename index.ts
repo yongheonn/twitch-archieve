@@ -14,6 +14,7 @@ const TWITCH_SECRET = "s8gfl3lvjq557d3klnrn73wecqejpj";
 
 let access_token = "";
 let stream_url_params = "";
+let errorCount = 0;
 const streamerIds: string[] = [
   "paka9999",
   "dopa24",
@@ -235,6 +236,7 @@ const getPat = async (id: string, vidId: string) => {
           "ValueError: token_expire_time"
         );
         //  self.legacy_func = True
+        errorCount++;
       }
     } else {
       info[id][vidId]["patCheck"] += 1;
@@ -242,6 +244,7 @@ const getPat = async (id: string, vidId: string) => {
     }
   } catch (e) {
     logger.info("error: " + e);
+    errorCount++;
   }
 };
 
@@ -321,6 +324,7 @@ const checkQuality = async (id: string, vidId: string) => {
   } catch (e) {
     console.log("quality error: " + e);
     logger.info("quality error: " + e);
+    errorCount++;
   }
 };
 
@@ -420,12 +424,16 @@ const checkLive = async () => {
         for (const vidId in info[offlineStreamer]) {
           const isWaiting =
             info[offlineStreamer][vidId]["status"] === InfoStatus.WAITING;
+          const isDefault =
+            info[offlineStreamer][vidId]["status"] === InfoStatus.DEFAULT;
           if (isWaiting) {
             info[offlineStreamer][vidId] = {
               ...info[offlineStreamer][vidId],
               status: InfoStatus.UPLOADING,
             };
             await mergeVideo(offlineStreamer, vidId);
+          } else if (isDefault) {
+            delete info[offlineStreamer][vidId];
           }
         }
       }
@@ -470,6 +478,7 @@ const checkLive = async () => {
     logger.info(
       " requests.exceptions.ConnectionError. Go back checking...  message: " + e
     );
+    errorCount++;
   }
 };
 
@@ -759,9 +768,10 @@ app.get("/", function (req, res) {
     streamerIds,
     InfoStatus,
     StatusMessage: ["온라인", "준비 중", "녹화 중", "업로딩 중", "대기 중"],
+    errorCount: errorCount,
   });
 });
-
+/*
 app.get("/redirect", function (req, res) {
   let { code, state } = req.query;
   const oauth2Client = new google.auth.OAuth2(
@@ -777,7 +787,7 @@ app.get("/redirect", function (req, res) {
     console.log("token: " + JSON.stringify(token));
   });
 });
-
+*/
 app.listen(3000, async function () {
   console.log("Twitch auth sample listening on port 3000!");
 

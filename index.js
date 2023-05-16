@@ -24,6 +24,7 @@ const TWITCH_CLIENT_ID = "6gkwj5guq4a5vjbpd181ksilve9km5";
 const TWITCH_SECRET = "s8gfl3lvjq557d3klnrn73wecqejpj";
 let access_token = "";
 let stream_url_params = "";
+let errorCount = 0;
 const streamerIds = [
     "paka9999",
     "dopa24",
@@ -184,6 +185,7 @@ const getPat = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
                 delete info[id][vidId]["pat"];
                 winston_1.default.info("error", "PAT expiration time error, Change self.legacy_func to True", "ValueError: token_expire_time");
                 //  self.legacy_func = True
+                errorCount++;
             }
         }
         else {
@@ -193,6 +195,7 @@ const getPat = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (e) {
         winston_1.default.info("error: " + e);
+        errorCount++;
     }
 });
 const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -268,6 +271,7 @@ const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* 
     catch (e) {
         console.log("quality error: " + e);
         winston_1.default.info("quality error: " + e);
+        errorCount++;
     }
 });
 const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -339,9 +343,13 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
             for (const offlineStreamer of offlineStreamers) {
                 for (const vidId in info[offlineStreamer]) {
                     const isWaiting = info[offlineStreamer][vidId]["status"] === InfoStatus.WAITING;
+                    const isDefault = info[offlineStreamer][vidId]["status"] === InfoStatus.DEFAULT;
                     if (isWaiting) {
                         info[offlineStreamer][vidId] = Object.assign(Object.assign({}, info[offlineStreamer][vidId]), { status: InfoStatus.UPLOADING });
                         yield mergeVideo(offlineStreamer, vidId);
+                    }
+                    else if (isDefault) {
+                        delete info[offlineStreamer][vidId];
                     }
                 }
             }
@@ -383,6 +391,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
     catch (e) {
         console.info("error: " + e);
         winston_1.default.info(" requests.exceptions.ConnectionError. Go back checking...  message: " + e);
+        errorCount++;
     }
 });
 const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -625,19 +634,26 @@ app.get("/", function (req, res) {
         streamerIds,
         InfoStatus,
         StatusMessage: ["온라인", "준비 중", "녹화 중", "업로딩 중", "대기 중"],
+        errorCount: errorCount,
     });
 });
+/*
 app.get("/redirect", function (req, res) {
-    let { code, state } = req.query;
-    const oauth2Client = new googleapis_1.google.auth.OAuth2("1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com", "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", "http://localhost:3000/redirect");
-    oauth2Client.getToken(code, function (err, token) {
-        if (err) {
-            console.log("Error while trying to retrieve access token", err);
-            return;
-        }
-        console.log("token: " + JSON.stringify(token));
-    });
+  let { code, state } = req.query;
+  const oauth2Client = new google.auth.OAuth2(
+    "1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com",
+    "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",
+    "http://localhost:3000/redirect"
+  );
+  oauth2Client.getToken(code as string, function (err, token) {
+    if (err) {
+      console.log("Error while trying to retrieve access token", err);
+      return;
+    }
+    console.log("token: " + JSON.stringify(token));
+  });
 });
+*/
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("Twitch auth sample listening on port 3000!");
