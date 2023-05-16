@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>youtube archieve</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+  </head>
+  <body>
+    <% for(var streamer of streamerIds){ %>
+    <h2><%= streamer %></h2>
+    <% for(var vidId in info[streamer]) { var vidInfo = info[streamer][vidId] %>
+    <h3><%= vidId %></h3>
+    <br />
+    <span>제목: <%= vidInfo.title %></span>
+    <br />
+    <span>게임: <%= vidInfo.game %></span>
+    <br />
+    <span>화질: <%= vidInfo.quality %></span>
+    <br />
+    <span>상태: <%= vidInfo.status%></span>
+    <br /><br />
+    <% } }%>
+  </body>
+</html>
