@@ -27,7 +27,7 @@ let quality = "1080p60";
 const exceptGames = ["League of Legends"]; //
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
-const root_path = __dirname + "\\"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
+const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
 const quality_in_title = true; // True인 경우 제목에 품질 정보 추가
 const streamlink_args = [
   "--stream-segment-threads",
@@ -516,7 +516,7 @@ const doProcess = async () => {
         for (const vidId in info[id]) {
           if (info[id][vidId]["status"] === InfoStatus.READY) {
             logger.info(id + " is online. Stream recording in session.");
-            const downloadPath = root_path + id + "\\";
+            const downloadPath = root_path + id + "/";
             if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath);
 
             const filePath =
@@ -585,8 +585,8 @@ const doProcess = async () => {
 const mergeVideo = async (id: string, vidId: string) => {
   if (info[id][vidId].fileName.length === 1) {
     fs.rename(
-      root_path + id + "\\" + info[id][vidId].fileName[0] + ".ts",
-      root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts",
+      root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
+      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       async function (err) {
         if (err) throw err;
         await youtubeUpload(id, vidId);
@@ -594,10 +594,10 @@ const mergeVideo = async (id: string, vidId: string) => {
     );
   } else if (info[id][vidId].fileName.length > 1) {
     const inputFile =
-      root_path + id + "\\" + info[id][vidId].fileName[0] + ".txt";
+      root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
     let data = "";
     for (const fileName of info[id][vidId].fileName) {
-      data += root_path + id + "\\" + fileName + ".ts" + "\n";
+      data += root_path + id + "/" + fileName + ".ts" + "\n";
     }
     fs.writeFile(inputFile, data, "utf8", function (error) {
       if (error) throw error;
@@ -610,26 +610,26 @@ const mergeVideo = async (id: string, vidId: string) => {
         inputFile,
         "-c",
         "copy",
-        root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       ]); //return code: 3221225786, 130;
       info[id][vidId].procs?.on("exit", async (code) => {
         logger.info(id + " merge is done. status: " + code);
         for (const fileName of info[id][vidId].fileName) {
-          fs.unlink(root_path + id + "\\" + fileName + "ts", (err) => {
+          fs.unlink(root_path + id + "/" + fileName + "ts", (err) => {
             if (err) throw err;
 
             logger.info(fileName + " is deleted.");
           });
         }
         fs.unlink(
-          root_path + id + "\\" + info[id][vidId].fileName[0] + ".txt",
+          root_path + id + "/" + info[id][vidId].fileName[0] + ".txt",
           (err) => {
             if (err) throw err;
 
             logger.info(
               root_path +
                 id +
-                "\\" +
+                "/" +
                 info[id][vidId].fileName[0] +
                 ".txt" +
                 " is deleted."
@@ -689,11 +689,9 @@ const youtubeUpload = async (id: string, vidId: string) => {
   description += info[id][vidId].game.at(-1) + ": ~ final";
 
   const media = fs.createReadStream(
-    root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts"
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
   );
-  logger.info(
-    root_path + id + "\\" + info[id][vidId].fileName[0] + "_fianl.ts"
-  );
+  logger.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
 
   const oauth2Client = new google.auth.OAuth2(
     "1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com",
@@ -734,14 +732,14 @@ const youtubeUpload = async (id: string, vidId: string) => {
     else {
       logger.info("response: " + JSON.stringify(data));
       fs.unlink(
-        root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         (err) => {
           if (err) throw err;
 
           logger.info(
             root_path +
               id +
-              "\\" +
+              "/" +
               info[id][vidId].fileName[0] +
               "_final.ts" +
               " is deleted."

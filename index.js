@@ -38,7 +38,7 @@ let quality = "1080p60";
 const exceptGames = ["League of Legends"]; //
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
-const root_path = __dirname + "\\"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
+const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
 const quality_in_title = true; // True인 경우 제목에 품질 정보 추가
 const streamlink_args = [
     "--stream-segment-threads",
@@ -430,7 +430,7 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                 for (const vidId in info[id]) {
                     if (info[id][vidId]["status"] === InfoStatus.READY) {
                         winston_1.default.info(id + " is online. Stream recording in session.");
-                        const downloadPath = root_path + id + "\\";
+                        const downloadPath = root_path + id + "/";
                         if (!fs_1.default.existsSync(downloadPath))
                             fs_1.default.mkdirSync(downloadPath);
                         const filePath = downloadPath + info[id][vidId].fileName.at(-1) + ".ts";
@@ -481,7 +481,7 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
     if (info[id][vidId].fileName.length === 1) {
-        fs_1.default.rename(root_path + id + "\\" + info[id][vidId].fileName[0] + ".ts", root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
+        fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (err)
                     throw err;
@@ -490,10 +490,10 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     else if (info[id][vidId].fileName.length > 1) {
-        const inputFile = root_path + id + "\\" + info[id][vidId].fileName[0] + ".txt";
+        const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
         let data = "";
         for (const fileName of info[id][vidId].fileName) {
-            data += root_path + id + "\\" + fileName + ".ts" + "\n";
+            data += root_path + id + "/" + fileName + ".ts" + "\n";
         }
         fs_1.default.writeFile(inputFile, data, "utf8", function (error) {
             var _a;
@@ -508,23 +508,23 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                 inputFile,
                 "-c",
                 "copy",
-                root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts",
+                root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
             ]); //return code: 3221225786, 130;
             (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
                 winston_1.default.info(id + " merge is done. status: " + code);
                 for (const fileName of info[id][vidId].fileName) {
-                    fs_1.default.unlink(root_path + id + "\\" + fileName + "ts", (err) => {
+                    fs_1.default.unlink(root_path + id + "/" + fileName + "ts", (err) => {
                         if (err)
                             throw err;
                         winston_1.default.info(fileName + " is deleted.");
                     });
                 }
-                fs_1.default.unlink(root_path + id + "\\" + info[id][vidId].fileName[0] + ".txt", (err) => {
+                fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + ".txt", (err) => {
                     if (err)
                         throw err;
                     winston_1.default.info(root_path +
                         id +
-                        "\\" +
+                        "/" +
                         info[id][vidId].fileName[0] +
                         ".txt" +
                         " is deleted.");
@@ -574,8 +574,8 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
                 "\n";
     }
     description += info[id][vidId].game.at(-1) + ": ~ final";
-    const media = fs_1.default.createReadStream(root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts");
-    winston_1.default.info(root_path + id + "\\" + info[id][vidId].fileName[0] + "_fianl.ts");
+    const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
+    winston_1.default.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
     const oauth2Client = new googleapis_1.google.auth.OAuth2("1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com", "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", "http://localhost:3000/redirect");
     oauth2Client.credentials = {
         access_token: "ya29.a0AWY7Cknyh54tEVh_HYSdktHT5KRGjK01nrWJebzQAz5ZtoFZ__YELhVKRHslsyNsWjKCx6ylKOec08A17BYF9MugZyHijHGTfQlF2y3DOfpQHFMlWhcF7DvBTHEqAIRusZM0t80nGsKjLtuskGlRlf7fHycJaCgYKAdASARISFQG1tDrprCZKj9Q74vA1ABcfHI1cHA0163",
@@ -607,12 +607,12 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
             winston_1.default.error("err: " + err);
         else {
             winston_1.default.info("response: " + JSON.stringify(data));
-            fs_1.default.unlink(root_path + id + "\\" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
+            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
                 if (err)
                     throw err;
                 winston_1.default.info(root_path +
                     id +
-                    "\\" +
+                    "/" +
                     info[id][vidId].fileName[0] +
                     "_final.ts" +
                     " is deleted.");
