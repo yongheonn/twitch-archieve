@@ -434,7 +434,7 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                         if (!fs_1.default.existsSync(downloadPath))
                             fs_1.default.mkdirSync(downloadPath);
                         const filePath = downloadPath + info[id][vidId].fileName.at(-1) + ".ts";
-                        info[id][vidId]["procs"] = (0, child_process_1.spawn)("streamlink", [
+                        info[id][vidId]["procs"] = (0, child_process_1.spawn)("~/.local/bin/streamlink", [
                             ...streamlink_args,
                             ...[
                                 "www.twitch.tv/" + id,
