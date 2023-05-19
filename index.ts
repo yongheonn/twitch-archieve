@@ -522,7 +522,7 @@ const doProcess = async () => {
             const filePath =
               downloadPath + info[id][vidId].fileName.at(-1) + ".ts";
 
-            info[id][vidId]["procs"] = spawn("~/.local/bin/streamlink", [
+            info[id][vidId]["procs"] = spawn("streamlink", [
               ...streamlink_args,
               ...[
                 "www.twitch.tv/" + id,
