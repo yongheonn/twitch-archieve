@@ -531,6 +531,18 @@ const doProcess = async () => {
                 filePath,
               ],
             ]); //return code: 3221225786, 130
+            logger.info(
+              "args: " +
+                [
+                  ...streamlink_args,
+                  ...[
+                    "www.twitch.tv/" + id,
+                    info[id][vidId]["quality"],
+                    "-o",
+                    filePath,
+                  ],
+                ]
+            );
             info[id][vidId] = {
               ...info[id][vidId],
               status: InfoStatus.RECORDING,

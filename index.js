@@ -443,6 +443,16 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                                 filePath,
                             ],
                         ]); //return code: 3221225786, 130
+                        winston_1.default.info("args: " +
+                            [
+                                ...streamlink_args,
+                                ...[
+                                    "www.twitch.tv/" + id,
+                                    info[id][vidId]["quality"],
+                                    "-o",
+                                    filePath,
+                                ],
+                            ]);
                         info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.RECORDING });
                         (_f = (_e = info[id][vidId]["procs"]) === null || _e === void 0 ? void 0 : _e.stdout) === null || _f === void 0 ? void 0 : _f.on("data", (data) => {
                             winston_1.default.info(data);
