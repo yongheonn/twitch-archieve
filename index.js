@@ -560,10 +560,12 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     let startAt = 0;
     let endAt = 0;
     if (info[id][vidId]["game"].length === 1) {
-        description += "~ final " + info[id][vidId].game[0] + "\n";
+        description += "~ final " + info[id][vidId].game[0];
     }
     else {
         endAt = info[id][vidId]["changeTime"][1] - info[id][vidId]["changeTime"][0];
+        if (exceptGameIndex[0] === 0)
+            endAt = 0;
         const hour = Math.floor(endAt / 3600);
         const minute = Math.floor((endAt % 3600) / 60);
         const seconds = Math.floor((endAt % 3600) % 60);
