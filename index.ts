@@ -369,6 +369,9 @@ const checkLive = async () => {
 
         if (isNew && !isExceptGame)
           isValid = await checkQuality(stream["user_login"], stream["id"]);
+        else if (isNew && isExceptGame)
+          info[stream["user_login"]][stream["id"]]["status"] =
+            InfoStatus.WAITING;
 
         if (isValid)
           info[stream["user_login"]][stream["id"]]["status"] = InfoStatus.READY;

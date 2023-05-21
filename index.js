@@ -311,6 +311,9 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     stream["game_name"];
                 if (isNew && !isExceptGame)
                     isValid = yield checkQuality(stream["user_login"], stream["id"]);
+                else if (isNew && isExceptGame)
+                    info[stream["user_login"]][stream["id"]]["status"] =
+                        InfoStatus.WAITING;
                 if (isValid)
                     info[stream["user_login"]][stream["id"]]["status"] = InfoStatus.READY;
                 if (isExceptGame && isRecording) {
