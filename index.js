@@ -334,9 +334,10 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
                     info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
                     info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
-                    info[stream["user_login"]][stream["id"]].fileName.push(info[stream["user_login"]][stream["id"]].fileName[0] +
-                        "_" +
-                        info[stream["user_login"]][stream["id"]].fileName.length);
+                    if (info[stream["user_login"]][stream["id"]].fileName.length > 1)
+                        info[stream["user_login"]][stream["id"]].fileName.push(info[stream["user_login"]][stream["id"]].fileName[0] +
+                            "_" +
+                            info[stream["user_login"]][stream["id"]].fileName.length);
                     return;
                 }
                 offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);

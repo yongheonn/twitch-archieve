@@ -408,11 +408,12 @@ const checkLive = async () => {
             new Date().getTime() / 1000
           );
           info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
-          info[stream["user_login"]][stream["id"]].fileName.push(
-            info[stream["user_login"]][stream["id"]].fileName[0] +
-              "_" +
-              info[stream["user_login"]][stream["id"]].fileName.length
-          );
+          if (info[stream["user_login"]][stream["id"]].fileName.length > 1)
+            info[stream["user_login"]][stream["id"]].fileName.push(
+              info[stream["user_login"]][stream["id"]].fileName[0] +
+                "_" +
+                info[stream["user_login"]][stream["id"]].fileName.length
+            );
           return;
         }
 
