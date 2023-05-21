@@ -443,16 +443,6 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                                 filePath,
                             ],
                         ]); //return code: 3221225786, 130
-                        winston_1.default.info("args: " +
-                            [
-                                ...streamlink_args,
-                                ...[
-                                    "www.twitch.tv/" + id,
-                                    info[id][vidId]["quality"],
-                                    "-o",
-                                    filePath,
-                                ],
-                            ]);
                         info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.RECORDING });
                         (_f = (_e = info[id][vidId]["procs"]) === null || _e === void 0 ? void 0 : _e.stdout) === null || _f === void 0 ? void 0 : _f.on("data", (data) => {
                             winston_1.default.info(data);
@@ -535,11 +525,12 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
-    const title = id +
-        "-" +
-        new Date(info[id][vidId]["changeTime"][0] * 1000).toLocaleString() +
-        "_" +
-        info[id][vidId]["title"];
+    const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
+    const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
+    // 3. UTC to KST (UTC + 9시간)
+    const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
+    const kr_curr = new Date(utc + KR_TIME_DIFF);
+    const title = id + "-" + kr_curr.toLocaleString() + "_" + info[id][vidId]["title"];
     const exceptGameIndex = [];
     let fromIndex = 0;
     for (const exceptGame of exceptGames) {
@@ -548,32 +539,88 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
             exceptGameIndex.push(fromIndex);
         }
     }
-    let description = "00:00:00 " + info[id][vidId].game[0] + "\n";
-    for (let i = 1; i < info[id][vidId]["game"].length - 1; i++) {
-        let date = new Date((info[id][vidId]["changeTime"][i] - info[id][vidId]["changeTime"][0]) *
-            1000);
-        for (const index of exceptGameIndex) {
-            if (i > index) {
-                date = new Date((info[id][vidId]["changeTime"][i] -
-                    info[id][vidId]["changeTime"][index]) *
-                    1000);
-            }
-            else if (i === index) {
-                description += info[id][vidId]["game"][i] + "\n";
-                continue;
-            }
-        }
+    const checkFps = (0, child_process_1.spawn)("ffprobe", [
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=avg_frame_rate",
+        "-of",
+        "default=nw=1:nk=1]",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+    ]);
+    checkFps.stdout.on("data", (data) => {
+        winston_1.default.info(data);
+        const data2 = data.split("/");
+        const fps = Number(data2[0]) / Number(data2[1]);
+        winston_1.default.info(info[id][vidId].fileName[0] + "_final.ts" + " fps: " + fps);
+    });
+    let description = "00:00:00 ";
+    let startAt = 0;
+    let endAt = 0;
+    if (info[id][vidId]["game"].length === 1) {
+        description += "~ final " + info[id][vidId].game[0] + "\n";
+    }
+    else {
+        endAt = info[id][vidId]["changeTime"][1] - info[id][vidId]["changeTime"][0];
+        const hour = Math.floor(endAt / 3600);
+        const minute = Math.floor((endAt % 3600) / 60);
+        const seconds = Math.floor((endAt % 3600) % 60);
         description +=
-            date.getHours() +
+            "~ " +
+                hour +
                 ":" +
-                date.getMinutes() +
+                minute +
                 ":" +
-                date.getSeconds() +
+                seconds +
                 " " +
-                info[id][vidId]["game"][i] +
+                info[id][vidId].game[0] +
                 "\n";
     }
-    description += info[id][vidId].game.at(-1) + ": ~ final";
+    for (let i = 1; i < info[id][vidId]["game"].length - 1; i++) {
+        startAt = endAt;
+        let isExceptTime = false;
+        for (const index of exceptGameIndex) {
+            if (i === index) {
+                isExceptTime = true;
+            }
+        }
+        if (!isExceptTime)
+            endAt +=
+                info[id][vidId]["changeTime"][i + 1] - info[id][vidId]["changeTime"][i];
+        const startHour = Math.floor(startAt / 3600);
+        const startMinute = Math.floor((startAt % 3600) / 60);
+        const startSeconds = Math.floor((startAt % 3600) % 60);
+        const endHour = Math.floor(endAt / 3600);
+        const endMinute = Math.floor((endAt % 3600) / 60);
+        const endSeconds = Math.floor((endAt % 3600) % 60);
+        description +=
+            startHour +
+                ":" +
+                startMinute +
+                ":" +
+                startSeconds +
+                " ~ " +
+                endHour +
+                ":" +
+                endMinute +
+                ":" +
+                endSeconds +
+                " ";
+        info[id][vidId]["game"][i] + "\n";
+    }
+    const hour = Math.floor(endAt / 3600);
+    const minute = Math.floor((endAt % 3600) / 60);
+    const seconds = Math.floor((endAt % 3600) % 60);
+    description +=
+        hour +
+            ":" +
+            minute +
+            ":" +
+            seconds +
+            " ~ final " +
+            info[id][vidId].game.at(-1);
     const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
     winston_1.default.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
     const oauth2Client = new googleapis_1.google.auth.OAuth2("1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com", "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", "http://localhost:3000/redirect");
