@@ -661,7 +661,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
     "-show_entries",
     "stream=avg_frame_rate",
     "-of",
-    "default=nw=1:nk=1]",
+    "default=nw=1:nk=1",
     root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
   ]);
 
