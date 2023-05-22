@@ -669,14 +669,14 @@ const youtubeUpload = async (id: string, vidId: string) => {
     "stream=avg_frame_rate",
     "-of",
     "default=nw=1:nk=1",
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
   ]);
 
   checkFps.stdout.on("data", (data) => {
     logger.info(data);
     const data2 = String(data).split("/");
     const fps = Number(data2[0]) / Number(data2[1]);
-    logger.info(info[id][vidId].fileName[0] + "_final.ts" + " fps: " + fps);
+    logger.info(info[id][vidId].fileName[0] + "_final.mp4" + " fps: " + fps);
   });
 
   let description = "00:00:00 ";
