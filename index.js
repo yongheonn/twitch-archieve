@@ -305,15 +305,14 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 const isExceptGame = exceptGames.includes(stream["game_name"]);
                 const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
                     InfoStatus.RECORDING;
+                const isDefault = info[stream["user_login"]][stream["id"]]["status"] ===
+                    InfoStatus.DEFAULT;
                 const isWaiting = info[stream["user_login"]][stream["id"]]["status"] ===
                     InfoStatus.WAITING;
                 const isNewGame = info[stream["user_login"]][stream["id"]].game.at(-1) !==
                     stream["game_name"];
                 if (isNew && !isExceptGame)
                     isValid = yield checkQuality(stream["user_login"], stream["id"]);
-                else if (isNew && isExceptGame)
-                    info[stream["user_login"]][stream["id"]]["status"] =
-                        InfoStatus.WAITING;
                 if (isValid)
                     info[stream["user_login"]][stream["id"]]["status"] = InfoStatus.READY;
                 if (isExceptGame && isRecording) {
@@ -330,7 +329,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
                     return;
                 }
-                if (!isExceptGame && isWaiting) {
+                if (!isExceptGame && (isWaiting || isDefault)) {
                     info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
                     info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
                     info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
@@ -474,27 +473,14 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h;
     if (info[id][vidId].fileName.length === 1) {
-        info[id][vidId].procs = (0, child_process_1.spawn)("ffmpeg", [
-            "-i",
-            root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
-            "-acodec",
-            "copy",
-            "-vcodec",
-            "copy",
-            root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
-        ]);
-        (_h = info[id][vidId].procs) === null || _h === void 0 ? void 0 : _h.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
-            winston_1.default.info(id + " convert to mp4 is done. status: " + code);
-            delete info[id][vidId].procs;
-            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", (err) => {
+        fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg", function (err) {
+            return __awaiter(this, void 0, void 0, function* () {
                 if (err)
                     throw err;
-                winston_1.default.info(info[id][vidId].fileName[0] + " is deleted.");
+                yield youtubeUpload(id, vidId);
             });
-            yield youtubeUpload(id, vidId);
-        }));
+        });
     }
     else if (info[id][vidId].fileName.length > 1) {
         const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -515,7 +501,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                 inputFile,
                 "-c",
                 "copy",
-                root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
+                root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
             ]); //return code: 3221225786, 130;
             (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
                 winston_1.default.info(id + " merge is done. status: " + code);
@@ -566,13 +552,13 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
         "stream=avg_frame_rate",
         "-of",
         "default=nw=1:nk=1",
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
     ]);
     checkFps.stdout.on("data", (data) => {
         winston_1.default.info(data);
         const data2 = String(data).split("/");
         const fps = Number(data2[0]) / Number(data2[1]);
-        winston_1.default.info(info[id][vidId].fileName[0] + "_final.mp4" + " fps: " + fps);
+        winston_1.default.info(info[id][vidId].fileName[0] + "_final.mpeg" + " fps: " + fps);
     });
     let description = "00:00:00 ";
     let startAt = 0;
@@ -641,8 +627,8 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
             String(seconds).padStart(2, "0") +
             " ~ final " +
             info[id][vidId].game.at(-1);
-    const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4");
-    winston_1.default.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.mp4");
+    const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg");
+    winston_1.default.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.mpeg");
     const oauth2Client = new googleapis_1.google.auth.OAuth2("1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com", "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", "http://localhost:3000/redirect");
     oauth2Client.credentials = {
         access_token: "ya29.a0AWY7Cknyh54tEVh_HYSdktHT5KRGjK01nrWJebzQAz5ZtoFZ__YELhVKRHslsyNsWjKCx6ylKOec08A17BYF9MugZyHijHGTfQlF2y3DOfpQHFMlWhcF7DvBTHEqAIRusZM0t80nGsKjLtuskGlRlf7fHycJaCgYKAdASARISFQG1tDrprCZKj9Q74vA1ABcfHI1cHA0163",
@@ -674,14 +660,14 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
             winston_1.default.error("err: " + err);
         else {
             winston_1.default.info("response: " + JSON.stringify(data));
-            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4", (err) => {
+            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg", (err) => {
                 if (err)
                     throw err;
                 winston_1.default.info(root_path +
                     id +
                     "/" +
                     info[id][vidId].fileName[0] +
-                    "_final.mp4" +
+                    "_final.mpeg" +
                     " is deleted.");
             });
             delete info[id][vidId];

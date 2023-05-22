@@ -356,9 +356,13 @@ const checkLive = async () => {
           };
         }
         const isExceptGame = exceptGames.includes(stream["game_name"]);
+
         const isRecording =
           info[stream["user_login"]][stream["id"]]["status"] ===
           InfoStatus.RECORDING;
+        const isDefault =
+          info[stream["user_login"]][stream["id"]]["status"] ===
+          InfoStatus.DEFAULT;
         const isWaiting =
           info[stream["user_login"]][stream["id"]]["status"] ===
           InfoStatus.WAITING;
@@ -369,9 +373,6 @@ const checkLive = async () => {
 
         if (isNew && !isExceptGame)
           isValid = await checkQuality(stream["user_login"], stream["id"]);
-        else if (isNew && isExceptGame)
-          info[stream["user_login"]][stream["id"]]["status"] =
-            InfoStatus.WAITING;
 
         if (isValid)
           info[stream["user_login"]][stream["id"]]["status"] = InfoStatus.READY;
@@ -400,7 +401,7 @@ const checkLive = async () => {
           return;
         }
 
-        if (!isExceptGame && isWaiting) {
+        if (!isExceptGame && (isWaiting || isDefault)) {
           info[stream["user_login"]][stream["id"]]["game"].push(
             stream["game_name"]
           );
@@ -577,28 +578,14 @@ const doProcess = async () => {
 
 const mergeVideo = async (id: string, vidId: string) => {
   if (info[id][vidId].fileName.length === 1) {
-    info[id][vidId].procs = spawn("ffmpeg", [
-      "-i",
+    fs.rename(
       root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
-      "-acodec",
-      "copy",
-      "-vcodec",
-      "copy",
-      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
-    ]);
-    info[id][vidId].procs?.on("exit", async (code) => {
-      logger.info(id + " convert to mp4 is done. status: " + code);
-      delete info[id][vidId].procs;
-      fs.unlink(
-        root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
-        (err) => {
-          if (err) throw err;
-
-          logger.info(info[id][vidId].fileName[0] + " is deleted.");
-        }
-      );
-      await youtubeUpload(id, vidId);
-    });
+      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
+      async function (err) {
+        if (err) throw err;
+        await youtubeUpload(id, vidId);
+      }
+    );
   } else if (info[id][vidId].fileName.length > 1) {
     const inputFile =
       root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -617,7 +604,7 @@ const mergeVideo = async (id: string, vidId: string) => {
         inputFile,
         "-c",
         "copy",
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
       ]); //return code: 3221225786, 130;
       info[id][vidId].procs?.on("exit", async (code) => {
         logger.info(id + " merge is done. status: " + code);
@@ -677,14 +664,14 @@ const youtubeUpload = async (id: string, vidId: string) => {
     "stream=avg_frame_rate",
     "-of",
     "default=nw=1:nk=1",
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
   ]);
 
   checkFps.stdout.on("data", (data) => {
     logger.info(data);
     const data2 = String(data).split("/");
     const fps = Number(data2[0]) / Number(data2[1]);
-    logger.info(info[id][vidId].fileName[0] + "_final.mp4" + " fps: " + fps);
+    logger.info(info[id][vidId].fileName[0] + "_final.mpeg" + " fps: " + fps);
   });
 
   let description = "00:00:00 ";
@@ -760,10 +747,10 @@ const youtubeUpload = async (id: string, vidId: string) => {
     info[id][vidId].game.at(-1);
 
   const media = fs.createReadStream(
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4"
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg"
   );
   logger.info(
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.mp4"
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.mpeg"
   );
 
   const oauth2Client = new google.auth.OAuth2(
@@ -805,7 +792,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
     else {
       logger.info("response: " + JSON.stringify(data));
       fs.unlink(
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
         (err) => {
           if (err) throw err;
 
@@ -814,7 +801,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
               id +
               "/" +
               info[id][vidId].fileName[0] +
-              "_final.mp4" +
+              "_final.mpeg" +
               " is deleted."
           );
         }
