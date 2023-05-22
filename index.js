@@ -700,6 +700,7 @@ process.on("exit", (code) => {
     fs_1.default.writeFileSync(root_path + "info.json", JSON.stringify(info));
     winston_1.default.info(`info.json : ${info}`);
     revokeToken();
+    winston_1.default.info(`exit process complete`);
     if (code !== 0) {
         winston_1.default.info({
             exitCode: code,

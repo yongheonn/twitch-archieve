@@ -833,6 +833,7 @@ process.on("exit", (code) => {
   fs.writeFileSync(root_path + "info.json", JSON.stringify(info));
   logger.info(`info.json : ${info}`);
   revokeToken();
+  logger.info(`exit process complete`);
 
   if (code !== 0) {
     logger.info({
