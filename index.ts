@@ -24,7 +24,7 @@ const streamerIds: string[] = [
 let offlineStreamers: string[] = [...streamerIds];
 let info: Info = {};
 let quality = "1080p60";
-const exceptGames = ["League of Legends"]; //
+const exceptGames = ["League of Legends", "서버 프로그램 종료"]; //
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
@@ -339,7 +339,8 @@ const checkLive = async () => {
     offlineStreamers = [...streamerIds];
     const response = await doGetRequest(option);
     if (response && response.statusCode == 200) {
-      for (const stream of JSON.parse(response.body)["data"] as Stream[]) {
+      const streamList = JSON.parse(response.body)["data"] as Stream[];
+      for (const stream of streamList) {
         const isNew = !info[stream["user_login"]].hasOwnProperty(stream["id"]);
         let isValid: boolean | undefined = false;
         if (isNew) {
@@ -423,20 +424,28 @@ const checkLive = async () => {
         );
         logger.info(stream["user_login"] + " is online");
       }
-      for (const offlineStreamer of offlineStreamers) {
-        for (const vidId in info[offlineStreamer]) {
+      const vidIdList = [];
+      for (const stream of streamList) vidIdList.push(stream.id);
+      for (const streamerId of streamerIds) {
+        for (const vidId in info[streamerId]) {
           const isWaiting =
-            info[offlineStreamer][vidId]["status"] === InfoStatus.WAITING;
+            info[streamerId][vidId]["status"] === InfoStatus.WAITING;
           const isDefault =
-            info[offlineStreamer][vidId]["status"] === InfoStatus.DEFAULT;
-          if (isWaiting) {
-            info[offlineStreamer][vidId] = {
-              ...info[offlineStreamer][vidId],
-              status: InfoStatus.UPLOADING,
-            };
-            await mergeVideo(offlineStreamer, vidId);
-          } else if (isDefault) {
-            delete info[offlineStreamer][vidId];
+            info[streamerId][vidId]["status"] === InfoStatus.DEFAULT;
+          const isReady =
+            info[streamerId][vidId]["status"] === InfoStatus.READY;
+          const isRecording =
+            info[streamerId][vidId]["status"] === InfoStatus.RECORDING;
+          if (!vidIdList.includes(vidId)) {
+            if (isWaiting || isRecording) {
+              info[streamerId][vidId] = {
+                ...info[streamerId][vidId],
+                status: InfoStatus.UPLOADING,
+              };
+              mergeVideo(streamerId, vidId);
+            } else if (isDefault || isReady) {
+              delete info[streamerId][vidId];
+            }
           }
         }
       }
@@ -520,45 +529,7 @@ const doProcess = async () => {
       for (const id in info) {
         for (const vidId in info[id]) {
           if (info[id][vidId]["status"] === InfoStatus.READY) {
-            logger.info(id + " is online. Stream recording in session.");
-            const downloadPath = root_path + id + "/";
-            if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath);
-
-            const filePath =
-              downloadPath + info[id][vidId].fileName.at(-1) + ".ts";
-
-            info[id][vidId]["procs"] = spawn("streamlink", [
-              ...streamlink_args,
-              ...[
-                "www.twitch.tv/" + id,
-                info[id][vidId]["quality"],
-                "-o",
-                filePath,
-              ],
-            ]); //return code: 3221225786, 130
-
-            info[id][vidId] = {
-              ...info[id][vidId],
-              status: InfoStatus.RECORDING,
-            };
-
-            info[id][vidId]["procs"]?.stdout?.on("data", (data) => {
-              logger.info(data);
-            });
-
-            info[id][vidId]["procs"]?.on("exit", async (code) => {
-              delete info[id][vidId]["procs"];
-
-              logger.info(id + " stream is done. status: " + code);
-              info[id][vidId] = {
-                ...info[id][vidId],
-                status: InfoStatus.UPLOADING,
-              };
-              mergeVideo(id, vidId);
-              // 유튜브 업로드 작업
-            });
-
-            logger.info(id + " stream recording in session.");
+            recordStream(id, vidId);
           }
           if (offlineStreamers) {
             logger.info(
@@ -574,6 +545,36 @@ const doProcess = async () => {
       await sleep(refresh * 1000);
     }
   }
+};
+
+const recordStream = (id: string, vidId: string) => {
+  logger.info(id + " is online. Stream recording in session.");
+  const downloadPath = root_path + id + "/";
+  if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath);
+
+  const filePath = downloadPath + info[id][vidId].fileName.at(-1) + ".ts";
+
+  info[id][vidId]["procs"] = spawn("streamlink", [
+    ...streamlink_args,
+    ...["www.twitch.tv/" + id, info[id][vidId]["quality"], "-o", filePath],
+  ]); //return code: 3221225786, 130
+
+  info[id][vidId] = {
+    ...info[id][vidId],
+    status: InfoStatus.RECORDING,
+  };
+
+  info[id][vidId]["procs"]?.stdout?.on("data", (data) => {
+    logger.info(data);
+  });
+
+  info[id][vidId]["procs"]?.on("exit", async (code) => {
+    delete info[id][vidId]["procs"];
+
+    logger.info(id + " stream is done. status: " + code);
+  });
+
+  logger.info(id + " stream recording in session.");
 };
 
 const mergeVideo = async (id: string, vidId: string) => {
@@ -804,9 +805,9 @@ const youtubeUpload = async (id: string, vidId: string) => {
               "_final.mpeg" +
               " is deleted."
           );
+          delete info[id][vidId];
         }
       );
-      delete info[id][vidId];
     }
   });
   logger.info("uploading ");
@@ -814,6 +815,21 @@ const youtubeUpload = async (id: string, vidId: string) => {
 
 process.on("exit", (code) => {
   logger.info(`exit code : ${code}`);
+  for (const id in info) {
+    for (const vidId in info[id]) {
+      if (info[id][vidId].status === InfoStatus.RECORDING) {
+        info[id][vidId].status = InfoStatus.WAITING;
+        info[id][vidId].procs?.kill(2);
+        delete info[id][vidId].procs;
+        info[id][vidId]["game"].push("서버 프로그램 종료");
+        info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
+      } else if (info[id][vidId].status === InfoStatus.UPLOADING) {
+        while (vidId in info[id]) {
+          sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+        }
+      }
+    }
+  }
   fs.writeFileSync(root_path + "info.json", JSON.stringify(info));
   logger.info(`info.json : ${info}`);
   revokeToken();
@@ -860,6 +876,15 @@ app.get("/redirect", function (req, res) {
 const checkVideoList = async () => {
   if (fs.existsSync(root_path + "info.json"))
     info = await (await fetch(root_path + "info.json")).json();
+  for (const streamer in info) {
+    for (const vidId in info[streamer]) {
+      if (info[streamer][vidId].status === InfoStatus.UPLOADING) {
+        mergeVideo(streamer, vidId);
+      } else if (info[streamer][vidId].status === InfoStatus.RECORDING) {
+        recordStream(streamer, vidId);
+      }
+    }
+  }
 };
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");

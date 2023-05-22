@@ -35,7 +35,7 @@ const streamerIds = [
 let offlineStreamers = [...streamerIds];
 let info = {};
 let quality = "1080p60";
-const exceptGames = ["League of Legends"]; //
+const exceptGames = ["League of Legends", "서버 프로그램 종료"]; //
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
@@ -286,7 +286,8 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
         offlineStreamers = [...streamerIds];
         const response = yield doGetRequest(option);
         if (response && response.statusCode == 200) {
-            for (const stream of JSON.parse(response.body)["data"]) {
+            const streamList = JSON.parse(response.body)["data"];
+            for (const stream of streamList) {
                 const isNew = !info[stream["user_login"]].hasOwnProperty(stream["id"]);
                 let isValid = false;
                 if (isNew) {
@@ -342,16 +343,23 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);
                 winston_1.default.info(stream["user_login"] + " is online");
             }
-            for (const offlineStreamer of offlineStreamers) {
-                for (const vidId in info[offlineStreamer]) {
-                    const isWaiting = info[offlineStreamer][vidId]["status"] === InfoStatus.WAITING;
-                    const isDefault = info[offlineStreamer][vidId]["status"] === InfoStatus.DEFAULT;
-                    if (isWaiting) {
-                        info[offlineStreamer][vidId] = Object.assign(Object.assign({}, info[offlineStreamer][vidId]), { status: InfoStatus.UPLOADING });
-                        yield mergeVideo(offlineStreamer, vidId);
-                    }
-                    else if (isDefault) {
-                        delete info[offlineStreamer][vidId];
+            const vidIdList = [];
+            for (const stream of streamList)
+                vidIdList.push(stream.id);
+            for (const streamerId of streamerIds) {
+                for (const vidId in info[streamerId]) {
+                    const isWaiting = info[streamerId][vidId]["status"] === InfoStatus.WAITING;
+                    const isDefault = info[streamerId][vidId]["status"] === InfoStatus.DEFAULT;
+                    const isReady = info[streamerId][vidId]["status"] === InfoStatus.READY;
+                    const isRecording = info[streamerId][vidId]["status"] === InfoStatus.RECORDING;
+                    if (!vidIdList.includes(vidId)) {
+                        if (isWaiting || isRecording) {
+                            info[streamerId][vidId] = Object.assign(Object.assign({}, info[streamerId][vidId]), { status: InfoStatus.UPLOADING });
+                            mergeVideo(streamerId, vidId);
+                        }
+                        else if (isDefault || isReady) {
+                            delete info[streamerId][vidId];
+                        }
                     }
                 }
             }
@@ -396,7 +404,6 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f, _g;
     const escape_str = [
         "\\",
         "/",
@@ -432,32 +439,7 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
             for (const id in info) {
                 for (const vidId in info[id]) {
                     if (info[id][vidId]["status"] === InfoStatus.READY) {
-                        winston_1.default.info(id + " is online. Stream recording in session.");
-                        const downloadPath = root_path + id + "/";
-                        if (!fs_1.default.existsSync(downloadPath))
-                            fs_1.default.mkdirSync(downloadPath);
-                        const filePath = downloadPath + info[id][vidId].fileName.at(-1) + ".ts";
-                        info[id][vidId]["procs"] = (0, child_process_1.spawn)("streamlink", [
-                            ...streamlink_args,
-                            ...[
-                                "www.twitch.tv/" + id,
-                                info[id][vidId]["quality"],
-                                "-o",
-                                filePath,
-                            ],
-                        ]); //return code: 3221225786, 130
-                        info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.RECORDING });
-                        (_f = (_e = info[id][vidId]["procs"]) === null || _e === void 0 ? void 0 : _e.stdout) === null || _f === void 0 ? void 0 : _f.on("data", (data) => {
-                            winston_1.default.info(data);
-                        });
-                        (_g = info[id][vidId]["procs"]) === null || _g === void 0 ? void 0 : _g.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
-                            delete info[id][vidId]["procs"];
-                            winston_1.default.info(id + " stream is done. status: " + code);
-                            info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.UPLOADING });
-                            mergeVideo(id, vidId);
-                            // 유튜브 업로드 작업
-                        }));
-                        winston_1.default.info(id + " stream recording in session.");
+                        recordStream(id, vidId);
                     }
                     if (offlineStreamers) {
                         winston_1.default.info(offlineStreamers +
@@ -472,6 +454,27 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
 });
+const recordStream = (id, vidId) => {
+    var _a, _b, _c;
+    winston_1.default.info(id + " is online. Stream recording in session.");
+    const downloadPath = root_path + id + "/";
+    if (!fs_1.default.existsSync(downloadPath))
+        fs_1.default.mkdirSync(downloadPath);
+    const filePath = downloadPath + info[id][vidId].fileName.at(-1) + ".ts";
+    info[id][vidId]["procs"] = (0, child_process_1.spawn)("streamlink", [
+        ...streamlink_args,
+        ...["www.twitch.tv/" + id, info[id][vidId]["quality"], "-o", filePath],
+    ]); //return code: 3221225786, 130
+    info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.RECORDING });
+    (_b = (_a = info[id][vidId]["procs"]) === null || _a === void 0 ? void 0 : _a.stdout) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
+        winston_1.default.info(data);
+    });
+    (_c = info[id][vidId]["procs"]) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
+        delete info[id][vidId]["procs"];
+        winston_1.default.info(id + " stream is done. status: " + code);
+    }));
+    winston_1.default.info(id + " stream recording in session.");
+};
 const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
     if (info[id][vidId].fileName.length === 1) {
         fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg", function (err) {
@@ -669,14 +672,31 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
                     info[id][vidId].fileName[0] +
                     "_final.mpeg" +
                     " is deleted.");
+                delete info[id][vidId];
             });
-            delete info[id][vidId];
         }
     });
     winston_1.default.info("uploading ");
 });
 process.on("exit", (code) => {
+    var _a;
     winston_1.default.info(`exit code : ${code}`);
+    for (const id in info) {
+        for (const vidId in info[id]) {
+            if (info[id][vidId].status === InfoStatus.RECORDING) {
+                info[id][vidId].status = InfoStatus.WAITING;
+                (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.kill(2);
+                delete info[id][vidId].procs;
+                info[id][vidId]["game"].push("서버 프로그램 종료");
+                info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
+            }
+            else if (info[id][vidId].status === InfoStatus.UPLOADING) {
+                while (vidId in info[id]) {
+                    sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+                }
+            }
+        }
+    }
     fs_1.default.writeFileSync(root_path + "info.json", JSON.stringify(info));
     winston_1.default.info(`info.json : ${info}`);
     revokeToken();
@@ -719,6 +739,16 @@ app.get("/redirect", function (req, res) {
 const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
     if (fs_1.default.existsSync(root_path + "info.json"))
         info = yield (yield fetch(root_path + "info.json")).json();
+    for (const streamer in info) {
+        for (const vidId in info[streamer]) {
+            if (info[streamer][vidId].status === InfoStatus.UPLOADING) {
+                mergeVideo(streamer, vidId);
+            }
+            else if (info[streamer][vidId].status === InfoStatus.RECORDING) {
+                recordStream(streamer, vidId);
+            }
+        }
+    }
 });
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
