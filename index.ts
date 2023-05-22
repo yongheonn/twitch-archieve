@@ -589,6 +589,14 @@ const mergeVideo = async (id: string, vidId: string) => {
     info[id][vidId].procs?.on("exit", async (code) => {
       logger.info(id + " convert to mp4 is done. status: " + code);
       delete info[id][vidId].procs;
+      fs.unlink(
+        root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
+        (err) => {
+          if (err) throw err;
+
+          logger.info(info[id][vidId].fileName[0] + " is deleted.");
+        }
+      );
       await youtubeUpload(id, vidId);
     });
   } else if (info[id][vidId].fileName.length > 1) {
@@ -614,7 +622,7 @@ const mergeVideo = async (id: string, vidId: string) => {
       info[id][vidId].procs?.on("exit", async (code) => {
         logger.info(id + " merge is done. status: " + code);
         for (const fileName of info[id][vidId].fileName) {
-          fs.unlink(root_path + id + "/" + fileName + "ts", (err) => {
+          fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
             if (err) throw err;
 
             logger.info(fileName + " is deleted.");
@@ -752,9 +760,11 @@ const youtubeUpload = async (id: string, vidId: string) => {
     info[id][vidId].game.at(-1);
 
   const media = fs.createReadStream(
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4"
   );
-  logger.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
+  logger.info(
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.mp4"
+  );
 
   const oauth2Client = new google.auth.OAuth2(
     "1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com",
@@ -795,7 +805,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
     else {
       logger.info("response: " + JSON.stringify(data));
       fs.unlink(
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
         (err) => {
           if (err) throw err;
 
@@ -804,7 +814,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
               id +
               "/" +
               info[id][vidId].fileName[0] +
-              "_final.ts" +
+              "_final.mp4" +
               " is deleted."
           );
         }

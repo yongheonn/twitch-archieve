@@ -488,6 +488,11 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
         (_h = info[id][vidId].procs) === null || _h === void 0 ? void 0 : _h.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
             winston_1.default.info(id + " convert to mp4 is done. status: " + code);
             delete info[id][vidId].procs;
+            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", (err) => {
+                if (err)
+                    throw err;
+                winston_1.default.info(info[id][vidId].fileName[0] + " is deleted.");
+            });
             yield youtubeUpload(id, vidId);
         }));
     }
@@ -515,7 +520,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
             (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
                 winston_1.default.info(id + " merge is done. status: " + code);
                 for (const fileName of info[id][vidId].fileName) {
-                    fs_1.default.unlink(root_path + id + "/" + fileName + "ts", (err) => {
+                    fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
                         if (err)
                             throw err;
                         winston_1.default.info(fileName + " is deleted.");
@@ -636,8 +641,8 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
             String(seconds).padStart(2, "0") +
             " ~ final " +
             info[id][vidId].game.at(-1);
-    const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
-    winston_1.default.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
+    const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4");
+    winston_1.default.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.mp4");
     const oauth2Client = new googleapis_1.google.auth.OAuth2("1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com", "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", "http://localhost:3000/redirect");
     oauth2Client.credentials = {
         access_token: "ya29.a0AWY7Cknyh54tEVh_HYSdktHT5KRGjK01nrWJebzQAz5ZtoFZ__YELhVKRHslsyNsWjKCx6ylKOec08A17BYF9MugZyHijHGTfQlF2y3DOfpQHFMlWhcF7DvBTHEqAIRusZM0t80nGsKjLtuskGlRlf7fHycJaCgYKAdASARISFQG1tDrprCZKj9Q74vA1ABcfHI1cHA0163",
@@ -669,14 +674,14 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
             winston_1.default.error("err: " + err);
         else {
             winston_1.default.info("response: " + JSON.stringify(data));
-            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
+            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4", (err) => {
                 if (err)
                     throw err;
                 winston_1.default.info(root_path +
                     id +
                     "/" +
                     info[id][vidId].fileName[0] +
-                    "_final.ts" +
+                    "_final.mp4" +
                     " is deleted.");
             });
             delete info[id][vidId];
