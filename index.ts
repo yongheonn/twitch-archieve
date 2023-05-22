@@ -900,6 +900,7 @@ app.get("/redirect", function (req, res) {
 const checkVideoList = async () => {
   if (fs.existsSync(root_path + "info.json"))
     info = await (await fetch(root_path + "info.json")).json();
+  logger.info("success to load info: " + JSON.stringify(info));
   for (const streamer in info) {
     for (const vidId in info[streamer]) {
       if (info[streamer][vidId].status === InfoStatus.UPLOADING) {
