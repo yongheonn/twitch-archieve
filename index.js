@@ -778,9 +778,9 @@ const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
-        yield checkVideoList();
         for (const streamer of streamerIds)
             info[streamer] = {};
+        yield checkVideoList();
         yield getToken();
         stream_url_params = createStreamParams(streamerIds);
         yield doProcess();
