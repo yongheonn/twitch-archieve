@@ -709,6 +709,30 @@ process.on("exit", (code) => {
         });
     }
 });
+process.once("SIGINT", () => {
+    var _a;
+    console.log("You've pressed Ctrl + C on this process.");
+    for (const id in info) {
+        for (const vidId in info[id]) {
+            if (info[id][vidId].status === InfoStatus.RECORDING) {
+                info[id][vidId].status = InfoStatus.WAITING;
+                (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.kill(2);
+                delete info[id][vidId].procs;
+                info[id][vidId]["game"].push("서버 프로그램 종료");
+                info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
+            }
+            else if (info[id][vidId].status === InfoStatus.UPLOADING) {
+                while (vidId in info[id]) {
+                    sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+                }
+            }
+        }
+    }
+    fs_1.default.writeFileSync(root_path + "info.json", JSON.stringify(info));
+    winston_1.default.info(`info.json : ${info}`);
+    revokeToken();
+    winston_1.default.info(`exit process complete`);
+});
 app.set("view engine", "ejs");
 app.set("index", "./views/index");
 app.get("/", function (req, res) {
