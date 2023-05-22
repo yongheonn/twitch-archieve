@@ -474,14 +474,22 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _h;
     if (info[id][vidId].fileName.length === 1) {
-        fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (err)
-                    throw err;
-                yield youtubeUpload(id, vidId);
-            });
-        });
+        info[id][vidId].procs = (0, child_process_1.spawn)("ffmpeg", [
+            "-i",
+            root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
+            "-acodec",
+            "copy",
+            "-vcodec",
+            "copy",
+            root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
+        ]);
+        (_h = info[id][vidId].procs) === null || _h === void 0 ? void 0 : _h.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
+            winston_1.default.info(id + " convert to mp4 is done. status: " + code);
+            delete info[id][vidId].procs;
+            yield youtubeUpload(id, vidId);
+        }));
     }
     else if (info[id][vidId].fileName.length > 1) {
         const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -502,7 +510,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                 inputFile,
                 "-c",
                 "copy",
-                root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+                root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
             ]); //return code: 3221225786, 130;
             (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
                 winston_1.default.info(id + " merge is done. status: " + code);
@@ -523,6 +531,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                         ".txt" +
                         " is deleted.");
                 });
+                delete info[id][vidId].procs;
                 yield youtubeUpload(id, vidId);
             }));
         });
@@ -556,7 +565,7 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     ]);
     checkFps.stdout.on("data", (data) => {
         winston_1.default.info(data);
-        const data2 = data.split("/");
+        const data2 = String(data).split("/");
         const fps = Number(data2[0]) / Number(data2[1]);
         winston_1.default.info(info[id][vidId].fileName[0] + "_final.ts" + " fps: " + fps);
     });
@@ -564,7 +573,7 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     let startAt = 0;
     let endAt = 0;
     if (info[id][vidId]["game"].length === 1) {
-        description += "~ final " + info[id][vidId].game[0];
+        description += "~ final " + info[id][vidId].game[0] + "\n";
     }
     else {
         endAt = info[id][vidId]["changeTime"][1] - info[id][vidId]["changeTime"][0];
@@ -575,11 +584,11 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
         const seconds = Math.floor((endAt % 3600) % 60);
         description +=
             "~ " +
-                hour +
+                String(hour).padStart(2, "0") +
                 ":" +
-                minute +
+                String(minute).padStart(2, "0") +
                 ":" +
-                seconds +
+                String(seconds).padStart(2, "0") +
                 " " +
                 info[id][vidId].game[0] +
                 "\n";
@@ -602,17 +611,17 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
         const endMinute = Math.floor((endAt % 3600) / 60);
         const endSeconds = Math.floor((endAt % 3600) % 60);
         description +=
-            startHour +
+            String(startHour).padStart(2, "0") +
                 ":" +
-                startMinute +
+                String(startMinute).padStart(2, "0") +
                 ":" +
-                startSeconds +
+                String(startSeconds).padStart(2, "0") +
                 " ~ " +
-                endHour +
+                String(endHour).padStart(2, "0") +
                 ":" +
-                endMinute +
+                String(endMinute).padStart(2, "0") +
                 ":" +
-                endSeconds +
+                String(endSeconds).padStart(2, "0") +
                 " ";
         info[id][vidId]["game"][i] + "\n";
     }
@@ -620,11 +629,11 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     const minute = Math.floor((endAt % 3600) / 60);
     const seconds = Math.floor((endAt % 3600) % 60);
     description +=
-        hour +
+        String(hour).padStart(2, "0") +
             ":" +
-            minute +
+            String(minute).padStart(2, "0") +
             ":" +
-            seconds +
+            String(seconds).padStart(2, "0") +
             " ~ final " +
             info[id][vidId].game.at(-1);
     const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
@@ -677,6 +686,8 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
 });
 process.on("exit", (code) => {
     winston_1.default.info(`exit code : ${code}`);
+    fs_1.default.writeFileSync(root_path + "info.json", JSON.stringify(info));
+    winston_1.default.info(`info.json : ${info}`);
     revokeToken();
     if (code !== 0) {
         winston_1.default.info({
@@ -714,9 +725,14 @@ app.get("/redirect", function (req, res) {
   });
 });
 */
+const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
+    if (fs_1.default.existsSync(root_path + "info.json"))
+        info = yield (yield fetch(root_path + "info.json")).json();
+});
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
+        yield checkVideoList();
         for (const streamer of streamerIds)
             info[streamer] = {};
         yield getToken();

@@ -577,14 +577,20 @@ const doProcess = async () => {
 
 const mergeVideo = async (id: string, vidId: string) => {
   if (info[id][vidId].fileName.length === 1) {
-    fs.rename(
+    info[id][vidId].procs = spawn("ffmpeg", [
+      "-i",
       root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
-      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-      async function (err) {
-        if (err) throw err;
-        await youtubeUpload(id, vidId);
-      }
-    );
+      "-acodec",
+      "copy",
+      "-vcodec",
+      "copy",
+      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
+    ]);
+    info[id][vidId].procs?.on("exit", async (code) => {
+      logger.info(id + " convert to mp4 is done. status: " + code);
+      delete info[id][vidId].procs;
+      await youtubeUpload(id, vidId);
+    });
   } else if (info[id][vidId].fileName.length > 1) {
     const inputFile =
       root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -603,7 +609,7 @@ const mergeVideo = async (id: string, vidId: string) => {
         inputFile,
         "-c",
         "copy",
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mp4",
       ]); //return code: 3221225786, 130;
       info[id][vidId].procs?.on("exit", async (code) => {
         logger.info(id + " merge is done. status: " + code);
@@ -629,6 +635,7 @@ const mergeVideo = async (id: string, vidId: string) => {
             );
           }
         );
+        delete info[id][vidId].procs;
         await youtubeUpload(id, vidId);
       });
     });
@@ -667,7 +674,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
 
   checkFps.stdout.on("data", (data) => {
     logger.info(data);
-    const data2 = data.split("/");
+    const data2 = String(data).split("/");
     const fps = Number(data2[0]) / Number(data2[1]);
     logger.info(info[id][vidId].fileName[0] + "_final.ts" + " fps: " + fps);
   });
@@ -678,7 +685,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
   let endAt = 0;
 
   if (info[id][vidId]["game"].length === 1) {
-    description += "~ final " + info[id][vidId].game[0];
+    description += "~ final " + info[id][vidId].game[0] + "\n";
   } else {
     endAt = info[id][vidId]["changeTime"][1] - info[id][vidId]["changeTime"][0];
     if (exceptGameIndex[0] === 0) endAt = 0;
@@ -687,11 +694,11 @@ const youtubeUpload = async (id: string, vidId: string) => {
     const seconds = Math.floor((endAt % 3600) % 60);
     description +=
       "~ " +
-      hour +
+      String(hour).padStart(2, "0") +
       ":" +
-      minute +
+      String(minute).padStart(2, "0") +
       ":" +
-      seconds +
+      String(seconds).padStart(2, "0") +
       " " +
       info[id][vidId].game[0] +
       "\n";
@@ -718,17 +725,17 @@ const youtubeUpload = async (id: string, vidId: string) => {
     const endSeconds = Math.floor((endAt % 3600) % 60);
 
     description +=
-      startHour +
+      String(startHour).padStart(2, "0") +
       ":" +
-      startMinute +
+      String(startMinute).padStart(2, "0") +
       ":" +
-      startSeconds +
+      String(startSeconds).padStart(2, "0") +
       " ~ " +
-      endHour +
+      String(endHour).padStart(2, "0") +
       ":" +
-      endMinute +
+      String(endMinute).padStart(2, "0") +
       ":" +
-      endSeconds +
+      String(endSeconds).padStart(2, "0") +
       " ";
     info[id][vidId]["game"][i] + "\n";
   }
@@ -736,11 +743,11 @@ const youtubeUpload = async (id: string, vidId: string) => {
   const minute = Math.floor((endAt % 3600) / 60);
   const seconds = Math.floor((endAt % 3600) % 60);
   description +=
-    hour +
+    String(hour).padStart(2, "0") +
     ":" +
-    minute +
+    String(minute).padStart(2, "0") +
     ":" +
-    seconds +
+    String(seconds).padStart(2, "0") +
     " ~ final " +
     info[id][vidId].game.at(-1);
 
@@ -810,6 +817,8 @@ const youtubeUpload = async (id: string, vidId: string) => {
 
 process.on("exit", (code) => {
   logger.info(`exit code : ${code}`);
+  fs.writeFileSync(root_path + "info.json", JSON.stringify(info));
+  logger.info(`info.json : ${info}`);
   revokeToken();
 
   if (code !== 0) {
@@ -850,9 +859,14 @@ app.get("/redirect", function (req, res) {
   });
 });
 */
+
+const checkVideoList = async () => {
+  if (fs.existsSync(root_path + "info.json"))
+    info = await (await fetch(root_path + "info.json")).json();
+};
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
-
+  await checkVideoList();
   for (const streamer of streamerIds) info[streamer] = {};
   await getToken();
 
