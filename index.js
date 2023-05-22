@@ -735,8 +735,8 @@ app.get("/redirect", function (req, res) {
 */
 const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
     if (fs_1.default.existsSync(root_path + "info.json")) {
-        const jsonFile = yield fetch(root_path + "info.json");
-        info = yield jsonFile.json();
+        const jsonFile = require(root_path + "info.json");
+        info = JSON.parse(jsonFile);
     }
     winston_1.default.info("success to load info: " + JSON.stringify(info));
     for (const streamer in info) {
