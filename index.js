@@ -404,34 +404,6 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
-    const escape_str = [
-        "\\",
-        "/",
-        ":",
-        "*",
-        "?",
-        '"',
-        "<",
-        ">",
-        "|",
-        "a",
-        "\b",
-        "\f",
-        "\n",
-        "\r",
-        "\t",
-        "\v",
-        "N",
-        "U",
-        "\f\r",
-        "\r\n",
-        "\x1c",
-        "\x1d",
-        "\x1e",
-        "\x85",
-        "\u2028",
-        "\u2029",
-    ];
     while (true) {
         yield checkLive();
         yield sleep(refresh * 1000);
@@ -762,8 +734,10 @@ app.get("/redirect", function (req, res) {
 });
 */
 const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
-    if (fs_1.default.existsSync(root_path + "info.json"))
-        info = yield (yield fetch(root_path + "info.json")).json();
+    if (fs_1.default.existsSync(root_path + "info.json")) {
+        const jsonFile = yield fetch(root_path + "info.json");
+        info = yield jsonFile.json();
+    }
     winston_1.default.info("success to load info: " + JSON.stringify(info));
     for (const streamer in info) {
         for (const vidId in info[streamer]) {

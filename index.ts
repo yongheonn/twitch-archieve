@@ -494,34 +494,6 @@ const checkLive = async () => {
 };
 
 const doProcess = async () => {
-  const escape_str = [
-    "\\",
-    "/",
-    ":",
-    "*",
-    "?",
-    '"',
-    "<",
-    ">",
-    "|",
-    "a",
-    "\b",
-    "\f",
-    "\n",
-    "\r",
-    "\t",
-    "\v",
-    "N",
-    "U",
-    "\f\r",
-    "\r\n",
-    "\x1c",
-    "\x1d",
-    "\x1e",
-    "\x85",
-    "\u2028",
-    "\u2029",
-  ];
   while (true) {
     await checkLive();
     await sleep(refresh * 1000);
@@ -898,8 +870,10 @@ app.get("/redirect", function (req, res) {
 */
 
 const checkVideoList = async () => {
-  if (fs.existsSync(root_path + "info.json"))
-    info = await (await fetch(root_path + "info.json")).json();
+  if (fs.existsSync(root_path + "info.json")) {
+    const jsonFile = await fetch(root_path + "info.json");
+    info = await jsonFile.json();
+  }
   logger.info("success to load info: " + JSON.stringify(info));
   for (const streamer in info) {
     for (const vidId in info[streamer]) {
