@@ -736,16 +736,17 @@ app.get("/redirect", function (req, res) {
 const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
     if (fs_1.default.existsSync(root_path + "info.json")) {
         const jsonFile = require(root_path + "info.json");
-        info = JSON.parse(jsonFile);
+        info = jsonFile;
+        console.log(JSON.stringify(info));
     }
-    winston_1.default.info("success to load info: " + JSON.stringify(info));
+    // logger.info("success to load info: " + JSON.stringify(info));
     for (const streamer in info) {
         for (const vidId in info[streamer]) {
             if (info[streamer][vidId].status === InfoStatus.UPLOADING) {
-                mergeVideo(streamer, vidId);
+                //   mergeVideo(streamer, vidId);
             }
             else if (info[streamer][vidId].status === InfoStatus.RECORDING) {
-                recordStream(streamer, vidId);
+                //  recordStream(streamer, vidId);
             }
         }
     }
@@ -753,11 +754,10 @@ const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
-        for (const streamer of streamerIds)
-            info[streamer] = {};
+        //for (const streamer of streamerIds) info[streamer] = {};
         yield checkVideoList();
-        yield getToken();
-        stream_url_params = createStreamParams(streamerIds);
-        yield doProcess();
+        // await getToken();
+        // stream_url_params = createStreamParams(streamerIds);
+        // await doProcess();
     });
 });
