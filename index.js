@@ -289,6 +289,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
             for (const stream of streamList) {
                 const isNew = !info[stream["user_login"]].hasOwnProperty(stream["id"]);
                 let isValid = false;
+                const isExceptGame = exceptGames.includes(stream["game_name"]);
                 if (isNew) {
                     info[stream["user_login"]][stream["id"]] = {
                         title: stream["title"],
@@ -301,8 +302,9 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                         patCheck: 0,
                         procs: undefined,
                     };
+                    if (!isExceptGame)
+                        isValid = yield checkQuality(stream["user_login"], stream["id"]);
                 }
-                const isExceptGame = exceptGames.includes(stream["game_name"]);
                 const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
                     InfoStatus.RECORDING;
                 const isDefault = info[stream["user_login"]][stream["id"]]["status"] ===
@@ -311,8 +313,6 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     InfoStatus.WAITING;
                 const isNewGame = info[stream["user_login"]][stream["id"]].game.at(-1) !==
                     stream["game_name"];
-                if (isNew && !isExceptGame)
-                    isValid = yield checkQuality(stream["user_login"], stream["id"]);
                 if (isValid)
                     info[stream["user_login"]][stream["id"]]["status"] = InfoStatus.READY;
                 if (isExceptGame && isRecording) {

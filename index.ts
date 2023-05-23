@@ -342,6 +342,7 @@ const checkLive = async () => {
       for (const stream of streamList) {
         const isNew = !info[stream["user_login"]].hasOwnProperty(stream["id"]);
         let isValid: boolean | undefined = false;
+        const isExceptGame = exceptGames.includes(stream["game_name"]);
         if (isNew) {
           info[stream["user_login"]][stream["id"]] = {
             title: stream["title"],
@@ -354,8 +355,9 @@ const checkLive = async () => {
             patCheck: 0,
             procs: undefined,
           };
+          if (!isExceptGame)
+            isValid = await checkQuality(stream["user_login"], stream["id"]);
         }
-        const isExceptGame = exceptGames.includes(stream["game_name"]);
 
         const isRecording =
           info[stream["user_login"]][stream["id"]]["status"] ===
@@ -370,9 +372,6 @@ const checkLive = async () => {
         const isNewGame =
           info[stream["user_login"]][stream["id"]].game.at(-1) !==
           stream["game_name"];
-
-        if (isNew && !isExceptGame)
-          isValid = await checkQuality(stream["user_login"], stream["id"]);
 
         if (isValid)
           info[stream["user_login"]][stream["id"]]["status"] = InfoStatus.READY;
