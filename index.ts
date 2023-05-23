@@ -34,7 +34,6 @@ const streamlink_args = [
   "5",
   "--stream-segment-attempts",
   "5",
-  "--hls-live-restart",
   "--hls-live-edge",
   "6",
 ];
