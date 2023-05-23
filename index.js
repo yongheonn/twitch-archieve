@@ -333,8 +333,8 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 if (!isExceptGame &&
                     (isWaiting ||
-                        isDefault ||
-                        exceptGames.includes(info[stream["user_login"]][stream["id"]].game[0]))) {
+                        (isDefault &&
+                            exceptGames.includes(info[stream["user_login"]][stream["id"]].game[0])))) {
                     info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
                     info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
                     info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;

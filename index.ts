@@ -406,10 +406,10 @@ const checkLive = async () => {
         if (
           !isExceptGame &&
           (isWaiting ||
-            isDefault ||
-            exceptGames.includes(
-              info[stream["user_login"]][stream["id"]].game[0]
-            ))
+            (isDefault &&
+              exceptGames.includes(
+                info[stream["user_login"]][stream["id"]].game[0]
+              )))
         ) {
           info[stream["user_login"]][stream["id"]]["game"].push(
             stream["game_name"]
