@@ -616,7 +616,7 @@ const mergeVideo = async (id: string, vidId: string) => {
           }
         );
         delete info[id][vidId].procs;
-        await youtubeUpload(id, vidId);
+        youtubeUpload(id, vidId);
       });
     });
   }
@@ -796,7 +796,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
   logger.info("uploading ");
 };
 
-process.on("exit", (code) => {
+process.on("exit", async (code) => {
   logger.info(`exit code : ${code}`);
   for (const id in info) {
     for (const vidId in info[id]) {
@@ -808,7 +808,7 @@ process.on("exit", (code) => {
         info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
       } else if (info[id][vidId].status === InfoStatus.UPLOADING) {
         while (vidId in info[id]) {
-          sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+          await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
         }
       }
     }
@@ -827,7 +827,7 @@ process.on("exit", (code) => {
   }
 });
 
-process.once("SIGINT", () => {
+process.once("SIGINT", async () => {
   console.log("You've pressed Ctrl + C on this process.");
   for (const id in info) {
     for (const vidId in info[id]) {
@@ -839,7 +839,7 @@ process.once("SIGINT", () => {
         info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
       } else if (info[id][vidId].status === InfoStatus.UPLOADING) {
         while (vidId in info[id]) {
-          sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+          await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
         }
       }
     }
