@@ -355,9 +355,8 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     const isWaiting = info[streamerId][vidId]["status"] === InfoStatus.WAITING;
                     const isDefault = info[streamerId][vidId]["status"] === InfoStatus.DEFAULT;
                     const isReady = info[streamerId][vidId]["status"] === InfoStatus.READY;
-                    const isRecording = info[streamerId][vidId]["status"] === InfoStatus.RECORDING;
                     if (!vidIdList.includes(vidId)) {
-                        if (isWaiting || isRecording) {
+                        if (isWaiting) {
                             info[streamerId][vidId] = Object.assign(Object.assign({}, info[streamerId][vidId]), { status: InfoStatus.UPLOADING });
                             mergeVideo(streamerId, vidId);
                         }
@@ -448,6 +447,9 @@ const recordStream = (id, vidId) => {
     (_c = info[id][vidId]["procs"]) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
         delete info[id][vidId]["procs"];
         winston_1.default.info(id + " stream is done. status: " + code);
+        delete info[id][vidId].procs;
+        info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.UPLOADING });
+        mergeVideo(id, vidId);
     }));
     winston_1.default.info(id + " stream recording in session.");
 };
@@ -742,16 +744,6 @@ const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
     if (fs_1.default.existsSync(root_path + "info.json"))
         info = require(root_path + "info.json");
     winston_1.default.info("success to load info: " + JSON.stringify(info));
-    for (const streamer in info) {
-        for (const vidId in info[streamer]) {
-            if (info[streamer][vidId].status === InfoStatus.UPLOADING) {
-                mergeVideo(streamer, vidId);
-            }
-            else if (info[streamer][vidId].status === InfoStatus.RECORDING) {
-                recordStream(streamer, vidId);
-            }
-        }
-    }
 });
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {

@@ -442,10 +442,8 @@ const checkLive = async () => {
             info[streamerId][vidId]["status"] === InfoStatus.DEFAULT;
           const isReady =
             info[streamerId][vidId]["status"] === InfoStatus.READY;
-          const isRecording =
-            info[streamerId][vidId]["status"] === InfoStatus.RECORDING;
           if (!vidIdList.includes(vidId)) {
-            if (isWaiting || isRecording) {
+            if (isWaiting) {
               info[streamerId][vidId] = {
                 ...info[streamerId][vidId],
                 status: InfoStatus.UPLOADING,
@@ -552,6 +550,12 @@ const recordStream = (id: string, vidId: string) => {
     delete info[id][vidId]["procs"];
 
     logger.info(id + " stream is done. status: " + code);
+    delete info[id][vidId].procs;
+    info[id][vidId] = {
+      ...info[id][vidId],
+      status: InfoStatus.UPLOADING,
+    };
+    mergeVideo(id, vidId);
   });
 
   logger.info(id + " stream recording in session.");
@@ -881,15 +885,6 @@ const checkVideoList = async () => {
     info = require(root_path + "info.json");
 
   logger.info("success to load info: " + JSON.stringify(info));
-  for (const streamer in info) {
-    for (const vidId in info[streamer]) {
-      if (info[streamer][vidId].status === InfoStatus.UPLOADING) {
-        mergeVideo(streamer, vidId);
-      } else if (info[streamer][vidId].status === InfoStatus.RECORDING) {
-        recordStream(streamer, vidId);
-      }
-    }
-  }
 };
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
