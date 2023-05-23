@@ -563,7 +563,7 @@ const mergeVideo = async (id: string, vidId: string) => {
       root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
     let data = "";
     for (const fileName of info[id][vidId].fileName) {
-      data += root_path + id + "/" + fileName + ".ts" + "\n";
+      data += "file " + fileName + ".ts" + "\n";
     }
     fs.writeFile(inputFile, data, "utf8", function (error) {
       if (error) throw error;

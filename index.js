@@ -461,7 +461,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
         const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
         let data = "";
         for (const fileName of info[id][vidId].fileName) {
-            data += root_path + id + "/" + fileName + ".ts" + "\n";
+            data += "file " + fileName + ".ts" + "\n";
         }
         fs_1.default.writeFile(inputFile, data, "utf8", function (error) {
             var _a;
