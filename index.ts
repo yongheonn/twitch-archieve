@@ -410,12 +410,11 @@ const checkLive = async () => {
             new Date().getTime() / 1000
           );
           info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
-          if (info[stream["user_login"]][stream["id"]].fileName.length > 1)
-            info[stream["user_login"]][stream["id"]].fileName.push(
-              info[stream["user_login"]][stream["id"]].fileName[0] +
-                "_" +
-                info[stream["user_login"]][stream["id"]].fileName.length
-            );
+          info[stream["user_login"]][stream["id"]].fileName.push(
+            info[stream["user_login"]][stream["id"]].fileName[0] +
+              "_" +
+              info[stream["user_login"]][stream["id"]].fileName.length
+          );
           return;
         }
 
@@ -553,7 +552,7 @@ const mergeVideo = async (id: string, vidId: string) => {
   if (info[id][vidId].fileName.length === 1) {
     fs.rename(
       root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
-      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
+      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       async function (err) {
         if (err) throw err;
         await youtubeUpload(id, vidId);
@@ -577,7 +576,7 @@ const mergeVideo = async (id: string, vidId: string) => {
         inputFile,
         "-c",
         "copy",
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       ]); //return code: 3221225786, 130;
       info[id][vidId].procs?.on("exit", async (code) => {
         logger.info(id + " merge is done. status: " + code);
@@ -637,14 +636,14 @@ const youtubeUpload = async (id: string, vidId: string) => {
     "stream=avg_frame_rate",
     "-of",
     "default=nw=1:nk=1",
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
   ]);
 
   checkFps.stdout.on("data", (data) => {
     logger.info(data);
     const data2 = String(data).split("/");
     const fps = Number(data2[0]) / Number(data2[1]);
-    logger.info(info[id][vidId].fileName[0] + "_final.mpeg" + " fps: " + fps);
+    logger.info(info[id][vidId].fileName[0] + "_final.ts" + " fps: " + fps);
   });
 
   let description = "00:00:00 ";
@@ -721,11 +720,9 @@ const youtubeUpload = async (id: string, vidId: string) => {
     info[id][vidId].game.at(-1);
 
   const media = fs.createReadStream(
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg"
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
   );
-  logger.info(
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.mpeg"
-  );
+  logger.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
 
   const oauth2Client = new google.auth.OAuth2(
     "1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com",
@@ -766,7 +763,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
     else {
       logger.info("response: " + JSON.stringify(data));
       fs.unlink(
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.mpeg",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         (err) => {
           if (err) throw err;
 
@@ -775,7 +772,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
               id +
               "/" +
               info[id][vidId].fileName[0] +
-              "_final.mpeg" +
+              "_final.ts" +
               " is deleted."
           );
           delete info[id][vidId];
