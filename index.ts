@@ -36,6 +36,8 @@ const streamlink_args = [
   "5",
   "--hls-live-edge",
   "6",
+  "--hls-live-restart",
+  "--twitch-disable-ads",
 ];
 
 interface Info {
