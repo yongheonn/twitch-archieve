@@ -309,8 +309,6 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
                     InfoStatus.RECORDING;
-                const isDefault = info[stream["user_login"]][stream["id"]]["status"] ===
-                    InfoStatus.DEFAULT;
                 const isWaiting = info[stream["user_login"]][stream["id"]]["status"] ===
                     InfoStatus.WAITING;
                 const isNewGame = info[stream["user_login"]][stream["id"]].game.at(-1) !==
@@ -331,7 +329,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
                     return;
                 }
-                if (!isExceptGame && (isWaiting || isDefault)) {
+                if (!isExceptGame && isWaiting) {
                     info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
                     info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
                     info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;

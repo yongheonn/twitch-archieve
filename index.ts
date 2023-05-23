@@ -364,9 +364,6 @@ const checkLive = async () => {
         const isRecording =
           info[stream["user_login"]][stream["id"]]["status"] ===
           InfoStatus.RECORDING;
-        const isDefault =
-          info[stream["user_login"]][stream["id"]]["status"] ===
-          InfoStatus.DEFAULT;
         const isWaiting =
           info[stream["user_login"]][stream["id"]]["status"] ===
           InfoStatus.WAITING;
@@ -402,7 +399,7 @@ const checkLive = async () => {
           return;
         }
 
-        if (!isExceptGame && (isWaiting || isDefault)) {
+        if (!isExceptGame && isWaiting) {
           info[stream["user_login"]][stream["id"]]["game"].push(
             stream["game_name"]
           );
