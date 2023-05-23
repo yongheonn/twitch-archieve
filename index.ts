@@ -368,6 +368,10 @@ const checkLive = async () => {
           info[stream["user_login"]][stream["id"]]["status"] ===
           InfoStatus.WAITING;
 
+        const isDefault =
+          info[stream["user_login"]][stream["id"]]["status"] ===
+          InfoStatus.DEFAULT;
+
         const isNewGame =
           info[stream["user_login"]][stream["id"]].game.at(-1) !==
           stream["game_name"];
@@ -399,7 +403,14 @@ const checkLive = async () => {
           return;
         }
 
-        if (!isExceptGame && isWaiting) {
+        if (
+          !isExceptGame &&
+          (isWaiting ||
+            isDefault ||
+            exceptGames.includes(
+              info[stream["user_login"]][stream["id"]].game[0]
+            ))
+        ) {
           info[stream["user_login"]][stream["id"]]["game"].push(
             stream["game_name"]
           );
