@@ -588,8 +588,9 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
                 String(endMinute).padStart(2, "0") +
                 ":" +
                 String(endSeconds).padStart(2, "0") +
-                " ";
-        info[id][vidId]["game"][i] + "\n";
+                " " +
+                info[id][vidId]["game"][i] +
+                "\n";
     }
     const hour = Math.floor(endAt / 3600);
     const minute = Math.floor((endAt % 3600) / 60);
