@@ -445,11 +445,13 @@ const recordStream = (id, vidId) => {
         winston_1.default.info(data);
     });
     (_c = info[id][vidId]["procs"]) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
-        delete info[id][vidId]["procs"];
         winston_1.default.info(id + " stream is done. status: " + code);
-        delete info[id][vidId].procs;
-        info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.UPLOADING });
-        mergeVideo(id, vidId);
+        if (code == 0) {
+            delete info[id][vidId]["procs"];
+            delete info[id][vidId].procs;
+            info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.UPLOADING });
+            mergeVideo(id, vidId);
+        }
     }));
     winston_1.default.info(id + " stream recording in session.");
 };

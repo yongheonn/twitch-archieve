@@ -547,15 +547,17 @@ const recordStream = (id: string, vidId: string) => {
   });
 
   info[id][vidId]["procs"]?.on("exit", async (code) => {
-    delete info[id][vidId]["procs"];
-
     logger.info(id + " stream is done. status: " + code);
-    delete info[id][vidId].procs;
-    info[id][vidId] = {
-      ...info[id][vidId],
-      status: InfoStatus.UPLOADING,
-    };
-    mergeVideo(id, vidId);
+    if (code == 0) {
+      delete info[id][vidId]["procs"];
+
+      delete info[id][vidId].procs;
+      info[id][vidId] = {
+        ...info[id][vidId],
+        status: InfoStatus.UPLOADING,
+      };
+      mergeVideo(id, vidId);
+    }
   });
 
   logger.info(id + " stream recording in session.");
