@@ -720,18 +720,19 @@ const youtubeUpload = async (id: string, vidId: string) => {
       info[id][vidId]["game"][i] +
       "\n";
   }
-  const hour = Math.floor(endAt / 3600);
-  const minute = Math.floor((endAt % 3600) / 60);
-  const seconds = Math.floor((endAt % 3600) % 60);
-  description +=
-    String(hour).padStart(2, "0") +
-    ":" +
-    String(minute).padStart(2, "0") +
-    ":" +
-    String(seconds).padStart(2, "0") +
-    " ~ final " +
-    info[id][vidId].game.at(-1);
-
+  if (info[id][vidId]["game"].length > 1) {
+    const hour = Math.floor(endAt / 3600);
+    const minute = Math.floor((endAt % 3600) / 60);
+    const seconds = Math.floor((endAt % 3600) % 60);
+    description +=
+      String(hour).padStart(2, "0") +
+      ":" +
+      String(minute).padStart(2, "0") +
+      ":" +
+      String(seconds).padStart(2, "0") +
+      " ~ final " +
+      info[id][vidId].game.at(-1);
+  }
   const media = fs.createReadStream(
     root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
   );
