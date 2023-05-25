@@ -908,26 +908,7 @@ const temp = () => {
       },
     },
     pikra10: {},
-    xkwhd: {
-      "40333467191": {
-        title: "침착한 에임 폭팔적인 퍼포먼스",
-        game: ["Just Chatting", "VALORANT", "서버 프로그램 종료"],
-        changeTime: [1685021922.76, 1685024018.387, 1685040000.387],
-        quality: "1080p60",
-        status: 4,
-        fileName: ["40333467191", "40333467191_1"],
-        pat: {
-          token: {
-            value:
-              '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"xkwhd","channel_id":175163251,"chansub":{"restricted_bitrates":[],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685023122,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
-            signature: "27cc6beedd64a1e8f07da185c61b9374fbfd6a8f",
-            __typename: "PlaybackAccessToken",
-          },
-          expire: 1685023122,
-        },
-        patCheck: 0,
-      },
-    },
+    xkwhd: {},
     aba4647: {
       "40333341079": {
         title: "지뢰계 탑라이너",
