@@ -2,6 +2,13 @@ import appRoot from "app-root-path"; // app root 경로를 가져오는 lib
 import winston, { Logger } from "winston"; // winston lib
 import winstonDaily from "winston-daily-rotate-file"; // winston lib
 import process from "process";
+import moment from "moment-timezone";
+
+const appendTimestamp = winston.format((info, opts) => {
+  if (opts.tz)
+    info.timestamp = moment().tz(opts.tz).format("YYYY-MM-DD HH:mm:ss");
+  return info;
+});
 const { combine, timestamp, label, printf } = winston.format;
 
 const logDir = `${process.cwd()}/logs`;
@@ -12,8 +19,8 @@ const logFormat = printf(({ level, message, label, timestamp }) => {
 
 let logger: Logger = winston.createLogger({
   format: combine(
-    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    label({ label: "Winston 연습 어플리케이션" }), // 어플리케이션 이름
+    appendTimestamp({ tz: "Asia/Seoul" }),
+    label({ label: "Twitch Archive" }), // 어플리케이션 이름
     logFormat // log 출력 포맷
     //? format: combine() 에서 정의한 timestamp와 label 형식값이 logFormat에 들어가서 정의되게 된다. level이나 message는 콘솔에서 자동 정의
   ),

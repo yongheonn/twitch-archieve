@@ -31,6 +31,7 @@
     "concurrently": "^8.0.1",
     "google-auth-library": "^8.8.0",
     "googleapis": "^118.0.0",
+    "moment-timezone": "^0.5.43",
     "nodemon": "^2.0.22",
     "typescript": "^5.0.4"
   },
