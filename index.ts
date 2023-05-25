@@ -548,7 +548,7 @@ const recordStream = (id: string, vidId: string) => {
 
   info[id][vidId]["procs"]?.on("exit", async (code) => {
     logger.info(id + " stream is done. status: " + code);
-    if (code == 0) {
+    if (code == 0 || code == 1) {
       delete info[id][vidId]["procs"];
 
       delete info[id][vidId].procs;
@@ -883,6 +883,56 @@ app.get("/redirect", function (req, res) {
 });
 */
 
+const tempUpload = () => {
+  info = {
+    paka9999: {},
+    dopa24: {
+      "40332177031": {
+        title: "2시 언저리",
+        game: ["League of Legends", "Warcraft III", "StarCraft"],
+        changeTime: [1684992595.75, 1685007567.792, 1685033547.274],
+        quality: "1080p60",
+        status: 4,
+        fileName: ["40332177031_1"],
+        patCheck: 0,
+      },
+    },
+    pikra10: {},
+    xkwhd: {
+      "40333467191": {
+        title: "침착한 에임 폭팔적인 퍼포먼스",
+        game: ["Just Chatting", "VALORANT", "서버 프로그램 종료"],
+        changeTime: [1685021922.76, 1685024018.387, 1685043589.699],
+        quality: "1080p60",
+        status: 4,
+        fileName: ["40333467191"],
+        pat: {
+          token: {
+            value:
+              '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"xkwhd","channel_id":175163251,"chansub":{"restricted_bitrates":[],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685023122,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+            signature: "27cc6beedd64a1e8f07da185c61b9374fbfd6a8f",
+            __typename: "PlaybackAccessToken",
+          },
+          expire: 1685023122,
+        },
+        patCheck: 0,
+      },
+    },
+    aba4647: {
+      "40333341079": {
+        title: "지뢰계 탑라이너",
+        game: ["League of Legends"],
+        changeTime: [1685020008.36],
+        quality: "1080p60",
+        status: 0,
+        fileName: ["40333341079"],
+        patCheck: 0,
+      },
+    },
+    tmxk319: {},
+  };
+};
+
 const checkVideoList = async () => {
   if (fs.existsSync(root_path + "info.json"))
     info = require(root_path + "info.json");
@@ -893,7 +943,7 @@ app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
   for (const streamer of streamerIds) info[streamer] = {};
   await checkVideoList();
-
+  tempUpload();
   await getToken();
 
   stream_url_params = createStreamParams(streamerIds);
