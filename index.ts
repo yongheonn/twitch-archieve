@@ -575,7 +575,9 @@ const mergeVideo = async (id: string, vidId: string) => {
       root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       async function (err) {
         if (err) throw err;
-        await youtubeUpload(id, vidId);
+        youtubeUpload(id, vidId)
+          .then(() => null)
+          .catch(() => null);
       }
     );
   } else if (info[id][vidId].fileName.length > 1) {
@@ -909,11 +911,11 @@ const temp = () => {
     xkwhd: {
       "40333467191": {
         title: "침착한 에임 폭팔적인 퍼포먼스",
-        game: ["Just Chatting", "VALORANT"],
-        changeTime: [1685021922.76, 1685024018.387],
+        game: ["Just Chatting", "VALORANT", "서버 프로그램 종료"],
+        changeTime: [1685021922.76, 1685024018.387, 1685040000.387],
         quality: "1080p60",
         status: 4,
-        fileName: ["40333467191"],
+        fileName: ["40333467191", "40333467191_1"],
         pat: {
           token: {
             value:
