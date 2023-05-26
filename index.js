@@ -795,7 +795,7 @@ app.listen(3000, function () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
         for (const streamer of streamerIds)
             info[streamer] = {};
-        yield checkVideoList();
+        checkVideoList();
         yield getToken();
         temp();
         stream_url_params = createStreamParams(streamerIds);
