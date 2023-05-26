@@ -464,7 +464,7 @@ const mergeVideo = (id, vidId) => {
             fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
                 return __awaiter(this, void 0, void 0, function* () {
                     if (err) {
-                        winston_1.default.error(id + "_" + vidId + " merge error");
+                        winston_1.default.error(id + "_" + vidId + " merge error: " + err);
                         throw err;
                     }
                     winston_1.default.info(id + "_" + vidId + " rename done");

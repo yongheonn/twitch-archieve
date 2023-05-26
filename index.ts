@@ -574,7 +574,7 @@ const mergeVideo = (id: string, vidId: string) => {
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         async function (err) {
           if (err) {
-            logger.error(id + "_" + vidId + " merge error");
+            logger.error(id + "_" + vidId + " merge error: " + err);
             throw err;
           }
           logger.info(id + "_" + vidId + " rename done");
