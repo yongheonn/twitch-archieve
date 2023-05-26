@@ -457,20 +457,14 @@ const recordStream = (id, vidId) => {
     });
     winston_1.default.info(id + " stream recording in session.");
 };
-const mergeVideo = (id, vidId) => {
+const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e, _f, _g;
     try {
         winston_1.default.info(id + "_" + vidId + " merge start");
         if (info[id][vidId].fileName.length === 1) {
-            fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    if (err) {
-                        winston_1.default.error(id + "_" + vidId + " merge error: " + err);
-                        throw err;
-                    }
-                    winston_1.default.info(id + "_" + vidId + " rename done");
-                    yield youtubeUpload(id, vidId);
-                });
-            });
+            fs_1.default.renameSync(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
+            winston_1.default.info(id + "_" + vidId + " rename done");
+            yield youtubeUpload(id, vidId);
         }
         else if (info[id][vidId].fileName.length > 1) {
             const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -478,58 +472,54 @@ const mergeVideo = (id, vidId) => {
             for (const fileName of info[id][vidId].fileName) {
                 data += "file " + fileName + ".ts" + "\n";
             }
-            fs_1.default.writeFile(inputFile, data, "utf8", function (error) {
-                var _a, _b, _c;
-                if (error)
-                    throw error;
-                info[id][vidId].procs = (0, child_process_1.spawn)("ffmpeg", [
-                    "-safe",
-                    "0",
-                    "-f",
-                    "concat",
-                    "-i",
-                    inputFile,
-                    "-c",
-                    "copy",
-                    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-                ]); //return code: 3221225786, 130;
-                (_b = (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.stdout) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
-                    winston_1.default.info(data);
-                });
-                (_c = info[id][vidId].procs) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
-                    winston_1.default.info(id + " merge is done. status: " + code);
-                    for (const fileName of info[id][vidId].fileName) {
-                        fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
-                            if (err) {
-                                winston_1.default.error(id + "_" + fileName + " ts delete error");
-                                throw err;
-                            }
-                            winston_1.default.info(fileName + " is deleted.");
-                        });
-                    }
-                    fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + ".txt", (err) => {
+            fs_1.default.writeFileSync(inputFile, data, "utf8");
+            info[id][vidId].procs = (0, child_process_1.spawn)("ffmpeg", [
+                "-safe",
+                "0",
+                "-f",
+                "concat",
+                "-i",
+                inputFile,
+                "-c",
+                "copy",
+                root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+            ]); //return code: 3221225786, 130;
+            (_f = (_e = info[id][vidId].procs) === null || _e === void 0 ? void 0 : _e.stdout) === null || _f === void 0 ? void 0 : _f.on("data", (data) => {
+                winston_1.default.info(data);
+            });
+            (_g = info[id][vidId].procs) === null || _g === void 0 ? void 0 : _g.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
+                winston_1.default.info(id + " merge is done. status: " + code);
+                for (const fileName of info[id][vidId].fileName) {
+                    fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
                         if (err) {
-                            winston_1.default.error(id + "_" + info[id][vidId].fileName[0] + ".txt delete error");
+                            winston_1.default.error(id + "_" + fileName + " ts delete error");
                             throw err;
                         }
-                        winston_1.default.info(root_path +
-                            id +
-                            "/" +
-                            info[id][vidId].fileName[0] +
-                            ".txt" +
-                            " is deleted.");
+                        winston_1.default.info(fileName + " is deleted.");
                     });
-                    delete info[id][vidId].procs;
-                    yield youtubeUpload(id, vidId);
-                }));
-            });
+                }
+                fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + ".txt", (err) => {
+                    if (err) {
+                        winston_1.default.error(id + "_" + info[id][vidId].fileName[0] + ".txt delete error");
+                        throw err;
+                    }
+                    winston_1.default.info(root_path +
+                        id +
+                        "/" +
+                        info[id][vidId].fileName[0] +
+                        ".txt" +
+                        " is deleted.");
+                });
+                delete info[id][vidId].procs;
+                yield youtubeUpload(id, vidId);
+            }));
         }
     }
     catch (e) {
         winston_1.default.error(e);
         errorCount++;
     }
-};
+});
 const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
     const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
     const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
@@ -682,13 +672,13 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     winston_1.default.info("uploading ");
 });
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
+    var _h;
     winston_1.default.info(`exit code : ${code}`);
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
                 info[id][vidId].status = InfoStatus.WAITING;
-                (_e = info[id][vidId].procs) === null || _e === void 0 ? void 0 : _e.kill(2);
+                (_h = info[id][vidId].procs) === null || _h === void 0 ? void 0 : _h.kill(2);
                 delete info[id][vidId].procs;
                 info[id][vidId]["game"].push("서버 프로그램 종료");
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
@@ -713,13 +703,13 @@ process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 process.once("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
-    var _f;
+    var _j;
     console.log("You've pressed Ctrl + C on this process.");
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
                 info[id][vidId].status = InfoStatus.WAITING;
-                (_f = info[id][vidId].procs) === null || _f === void 0 ? void 0 : _f.kill(2);
+                (_j = info[id][vidId].procs) === null || _j === void 0 ? void 0 : _j.kill(2);
                 delete info[id][vidId].procs;
                 info[id][vidId]["game"].push("서버 프로그램 종료");
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);

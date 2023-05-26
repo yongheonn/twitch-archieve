@@ -565,22 +565,17 @@ const recordStream = (id: string, vidId: string) => {
   logger.info(id + " stream recording in session.");
 };
 
-const mergeVideo = (id: string, vidId: string) => {
+const mergeVideo = async (id: string, vidId: string) => {
   try {
     logger.info(id + "_" + vidId + " merge start");
     if (info[id][vidId].fileName.length === 1) {
-      fs.rename(
+      fs.renameSync(
         root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-        async function (err) {
-          if (err) {
-            logger.error(id + "_" + vidId + " merge error: " + err);
-            throw err;
-          }
-          logger.info(id + "_" + vidId + " rename done");
-          await youtubeUpload(id, vidId);
-        }
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
       );
+
+      logger.info(id + "_" + vidId + " rename done");
+      await youtubeUpload(id, vidId);
     } else if (info[id][vidId].fileName.length > 1) {
       const inputFile =
         root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -588,57 +583,55 @@ const mergeVideo = (id: string, vidId: string) => {
       for (const fileName of info[id][vidId].fileName) {
         data += "file " + fileName + ".ts" + "\n";
       }
-      fs.writeFile(inputFile, data, "utf8", function (error) {
-        if (error) throw error;
-        info[id][vidId].procs = spawn("ffmpeg", [
-          "-safe",
-          "0",
-          "-f",
-          "concat",
-          "-i",
-          inputFile,
-          "-c",
-          "copy",
-          root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-        ]); //return code: 3221225786, 130;
-        info[id][vidId].procs?.stdout?.on("data", (data) => {
-          logger.info(data);
-        });
-        info[id][vidId].procs?.on("exit", async (code) => {
-          logger.info(id + " merge is done. status: " + code);
-          for (const fileName of info[id][vidId].fileName) {
-            fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
-              if (err) {
-                logger.error(id + "_" + fileName + " ts delete error");
-                throw err;
-              }
-
-              logger.info(fileName + " is deleted.");
-            });
-          }
-          fs.unlink(
-            root_path + id + "/" + info[id][vidId].fileName[0] + ".txt",
-            (err) => {
-              if (err) {
-                logger.error(
-                  id + "_" + info[id][vidId].fileName[0] + ".txt delete error"
-                );
-                throw err;
-              }
-
-              logger.info(
-                root_path +
-                  id +
-                  "/" +
-                  info[id][vidId].fileName[0] +
-                  ".txt" +
-                  " is deleted."
-              );
+      fs.writeFileSync(inputFile, data, "utf8");
+      info[id][vidId].procs = spawn("ffmpeg", [
+        "-safe",
+        "0",
+        "-f",
+        "concat",
+        "-i",
+        inputFile,
+        "-c",
+        "copy",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+      ]); //return code: 3221225786, 130;
+      info[id][vidId].procs?.stdout?.on("data", (data) => {
+        logger.info(data);
+      });
+      info[id][vidId].procs?.on("exit", async (code) => {
+        logger.info(id + " merge is done. status: " + code);
+        for (const fileName of info[id][vidId].fileName) {
+          fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
+            if (err) {
+              logger.error(id + "_" + fileName + " ts delete error");
+              throw err;
             }
-          );
-          delete info[id][vidId].procs;
-          await youtubeUpload(id, vidId);
-        });
+
+            logger.info(fileName + " is deleted.");
+          });
+        }
+        fs.unlink(
+          root_path + id + "/" + info[id][vidId].fileName[0] + ".txt",
+          (err) => {
+            if (err) {
+              logger.error(
+                id + "_" + info[id][vidId].fileName[0] + ".txt delete error"
+              );
+              throw err;
+            }
+
+            logger.info(
+              root_path +
+                id +
+                "/" +
+                info[id][vidId].fileName[0] +
+                ".txt" +
+                " is deleted."
+            );
+          }
+        );
+        delete info[id][vidId].procs;
+        await youtubeUpload(id, vidId);
       });
     }
   } catch (e) {
