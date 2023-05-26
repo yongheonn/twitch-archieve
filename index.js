@@ -462,8 +462,10 @@ const mergeVideo = (id, vidId) => {
         if (info[id][vidId].fileName.length === 1) {
             fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    if (err)
+                    if (err) {
+                        winston_1.default.error(id + "_" + vidId + "merge error");
                         throw err;
+                    }
                     winston_1.default.info(id + "_" + vidId + " rename done");
                     yield youtubeUpload(id, vidId);
                 });
@@ -801,6 +803,7 @@ const checkVideoList = () => {
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
+        winston_1.default.error("error test");
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();

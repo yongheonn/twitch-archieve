@@ -572,7 +572,10 @@ const mergeVideo = (id: string, vidId: string) => {
         root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         async function (err) {
-          if (err) throw err;
+          if (err) {
+            logger.error(id + "_" + vidId + "merge error");
+            throw err;
+          }
           logger.info(id + "_" + vidId + " rename done");
           await youtubeUpload(id, vidId);
         }
@@ -940,6 +943,7 @@ const checkVideoList = () => {
 };
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
+  logger.error("error test");
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
   await getToken();
