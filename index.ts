@@ -459,7 +459,7 @@ const checkLive = async () => {
                 ...info[streamerId][vidId],
                 status: InfoStatus.MERGING,
               };
-              await mergeVideo(streamerId, vidId);
+              mergeVideo(streamerId, vidId);
             } else if (isDefault || isReady) {
               delete info[streamerId][vidId];
             }
@@ -566,14 +566,14 @@ const recordStream = (id: string, vidId: string) => {
         ...info[id][vidId],
         status: InfoStatus.MERGING,
       };
-      await mergeVideo(id, vidId);
+      mergeVideo(id, vidId);
     }
   });
 
   logger.info(id + " stream recording in session.");
 };
 
-const mergeVideo = async (id: string, vidId: string) => {
+const mergeVideo = (id: string, vidId: string) => {
   try {
     logger.info(id + "_" + vidId + " merge start");
     if (info[id][vidId].fileName.length === 1) {
@@ -583,7 +583,7 @@ const mergeVideo = async (id: string, vidId: string) => {
       );
 
       logger.info(id + "_" + vidId + " rename done");
-      await youtubeUpload(id, vidId);
+      youtubeUpload(id, vidId);
     } else if (info[id][vidId].fileName.length > 1) {
       const inputFile =
         root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -639,7 +639,7 @@ const mergeVideo = async (id: string, vidId: string) => {
           }
         );
         delete info[id][vidId].procs;
-        await youtubeUpload(id, vidId);
+        youtubeUpload(id, vidId);
       });
     }
   } catch (e) {
@@ -648,7 +648,7 @@ const mergeVideo = async (id: string, vidId: string) => {
   }
 };
 
-const youtubeUpload = async (id: string, vidId: string) => {
+const youtubeUpload = (id: string, vidId: string) => {
   const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
   const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
 
@@ -661,10 +661,11 @@ const youtubeUpload = async (id: string, vidId: string) => {
   const exceptGameIndex = [];
   let fromIndex = 0;
   for (const exceptGame of exceptGames) {
-    while (fromIndex !== -1) {
+    while (true) {
       fromIndex = info[id][vidId].game.indexOf(exceptGame, fromIndex);
       exceptGameIndex.push(fromIndex);
-      logger.info("except index: " + fromIndex);
+      if (fromIndex === -1) break;
+      fromIndex++;
     }
   }
 
@@ -783,27 +784,29 @@ const youtubeUpload = async (id: string, vidId: string) => {
   };
   logger.info("upload start ");
   info[id][vidId].status = InfoStatus.UPLOADING;
-  const response = await youtube.videos.insert(config);
-  if (response.status != 200) logger.error("err: uploadding error");
-  else {
-    logger.info("response: " + JSON.stringify(response.data));
-    fs.unlink(
-      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-      (err) => {
-        if (err) throw err;
+  youtube.videos.insert(config, (err: any, data: any) => {
+    if (err) logger.error("err: uploadding error");
+    else {
+      logger.info("response: " + JSON.stringify(data));
+      fs.unlink(
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+        (err) => {
+          if (err) throw err;
 
-        logger.info(
-          root_path +
-            id +
-            "/" +
-            info[id][vidId].fileName[0] +
-            "_final.ts" +
-            " is deleted."
-        );
-        delete info[id][vidId];
-      }
-    );
-  }
+          logger.info(
+            root_path +
+              id +
+              "/" +
+              info[id][vidId].fileName[0] +
+              "_final.ts" +
+              " is deleted."
+          );
+          delete info[id][vidId];
+        }
+      );
+    }
+  });
+
   logger.info("uploading ");
 };
 

@@ -365,7 +365,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     if (!vidIdList.includes(vidId)) {
                         if (isWaiting) {
                             info[streamerId][vidId] = Object.assign(Object.assign({}, info[streamerId][vidId]), { status: InfoStatus.MERGING });
-                            yield mergeVideo(streamerId, vidId);
+                            mergeVideo(streamerId, vidId);
                         }
                         else if (isDefault || isReady) {
                             delete info[streamerId][vidId];
@@ -456,19 +456,19 @@ const recordStream = (id, vidId) => {
             delete info[id][vidId]["procs"];
             delete info[id][vidId].procs;
             info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.MERGING });
-            yield mergeVideo(id, vidId);
+            mergeVideo(id, vidId);
         }
     }));
     winston_1.default.info(id + " stream recording in session.");
 };
-const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f, _g;
+const mergeVideo = (id, vidId) => {
+    var _a, _b, _c;
     try {
         winston_1.default.info(id + "_" + vidId + " merge start");
         if (info[id][vidId].fileName.length === 1) {
             fs_1.default.renameSync(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
             winston_1.default.info(id + "_" + vidId + " rename done");
-            yield youtubeUpload(id, vidId);
+            youtubeUpload(id, vidId);
         }
         else if (info[id][vidId].fileName.length > 1) {
             const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -488,10 +488,10 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                 "copy",
                 root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
             ]); //return code: 3221225786, 130;
-            (_f = (_e = info[id][vidId].procs) === null || _e === void 0 ? void 0 : _e.stdout) === null || _f === void 0 ? void 0 : _f.on("data", (data) => {
+            (_b = (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.stdout) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
                 winston_1.default.info(data);
             });
-            (_g = info[id][vidId].procs) === null || _g === void 0 ? void 0 : _g.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
+            (_c = info[id][vidId].procs) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
                 winston_1.default.info(id + " merge is done. status: " + code);
                 for (const fileName of info[id][vidId].fileName) {
                     fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -515,7 +515,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                         " is deleted.");
                 });
                 delete info[id][vidId].procs;
-                yield youtubeUpload(id, vidId);
+                youtubeUpload(id, vidId);
             }));
         }
     }
@@ -523,8 +523,8 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
         winston_1.default.error(e);
         errorCount++;
     }
-});
-const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const youtubeUpload = (id, vidId) => {
     const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
     const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
     winston_1.default.info(id + "_" + vidId + " youtube upload start");
@@ -535,10 +535,12 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     const exceptGameIndex = [];
     let fromIndex = 0;
     for (const exceptGame of exceptGames) {
-        while (fromIndex !== -1) {
+        while (true) {
             fromIndex = info[id][vidId].game.indexOf(exceptGame, fromIndex);
             exceptGameIndex.push(fromIndex);
-            winston_1.default.info("except index: " + fromIndex);
+            if (fromIndex === -1)
+                break;
+            fromIndex++;
         }
     }
     let description = "00:00:00 ";
@@ -641,33 +643,34 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
     };
     winston_1.default.info("upload start ");
     info[id][vidId].status = InfoStatus.UPLOADING;
-    const response = yield youtube.videos.insert(config);
-    if (response.status != 200)
-        winston_1.default.error("err: uploadding error");
-    else {
-        winston_1.default.info("response: " + JSON.stringify(response.data));
-        fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
-            if (err)
-                throw err;
-            winston_1.default.info(root_path +
-                id +
-                "/" +
-                info[id][vidId].fileName[0] +
-                "_final.ts" +
-                " is deleted.");
-            delete info[id][vidId];
-        });
-    }
+    youtube.videos.insert(config, (err, data) => {
+        if (err)
+            winston_1.default.error("err: uploadding error");
+        else {
+            winston_1.default.info("response: " + JSON.stringify(data));
+            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
+                if (err)
+                    throw err;
+                winston_1.default.info(root_path +
+                    id +
+                    "/" +
+                    info[id][vidId].fileName[0] +
+                    "_final.ts" +
+                    " is deleted.");
+                delete info[id][vidId];
+            });
+        }
+    });
     winston_1.default.info("uploading ");
-});
+};
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h;
+    var _e;
     winston_1.default.info(`exit code : ${code}`);
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
                 info[id][vidId].status = InfoStatus.WAITING;
-                (_h = info[id][vidId].procs) === null || _h === void 0 ? void 0 : _h.kill(2);
+                (_e = info[id][vidId].procs) === null || _e === void 0 ? void 0 : _e.kill(2);
                 delete info[id][vidId].procs;
                 info[id][vidId]["game"].push("서버 프로그램 종료");
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
@@ -692,13 +695,13 @@ process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 process.once("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
-    var _j;
+    var _f;
     console.log("You've pressed Ctrl + C on this process.");
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
                 info[id][vidId].status = InfoStatus.WAITING;
-                (_j = info[id][vidId].procs) === null || _j === void 0 ? void 0 : _j.kill(2);
+                (_f = info[id][vidId].procs) === null || _f === void 0 ? void 0 : _f.kill(2);
                 delete info[id][vidId].procs;
                 info[id][vidId]["game"].push("서버 프로그램 종료");
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
