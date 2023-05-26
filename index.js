@@ -360,7 +360,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     if (!vidIdList.includes(vidId)) {
                         if (isWaiting) {
                             info[streamerId][vidId] = Object.assign(Object.assign({}, info[streamerId][vidId]), { status: InfoStatus.MERGING });
-                            mergeVideo(streamerId, vidId);
+                            yield mergeVideo(streamerId, vidId);
                         }
                         else if (isDefault || isReady) {
                             delete info[streamerId][vidId];
@@ -446,15 +446,15 @@ const recordStream = (id, vidId) => {
     (_b = (_a = info[id][vidId]["procs"]) === null || _a === void 0 ? void 0 : _a.stdout) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
         winston_1.default.info(data);
     });
-    (_c = info[id][vidId]["procs"]) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => {
+    (_c = info[id][vidId]["procs"]) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
         winston_1.default.info(id + " stream is done. status: " + code);
         if (code == 0 || code == 1) {
             delete info[id][vidId]["procs"];
             delete info[id][vidId].procs;
             info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.MERGING });
-            mergeVideo(id, vidId);
+            yield mergeVideo(id, vidId);
         }
-    });
+    }));
     winston_1.default.info(id + " stream recording in session.");
 };
 const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -733,7 +733,14 @@ app.get("/", function (req, res) {
         info,
         streamerIds,
         InfoStatus,
-        StatusMessage: ["온라인", "준비 중", "녹화 중", "업로딩 중", "대기 중"],
+        statusMessage: [
+            "온라인",
+            "준비 중",
+            "녹화 중",
+            "업로딩 중",
+            "대기 중",
+            "동영상 처리중",
+        ],
         errorCount: errorCount,
     });
 });

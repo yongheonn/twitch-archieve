@@ -450,7 +450,7 @@ const checkLive = async () => {
                 ...info[streamerId][vidId],
                 status: InfoStatus.MERGING,
               };
-              mergeVideo(streamerId, vidId);
+              await mergeVideo(streamerId, vidId);
             } else if (isDefault || isReady) {
               delete info[streamerId][vidId];
             }
@@ -548,7 +548,7 @@ const recordStream = (id: string, vidId: string) => {
     logger.info(data);
   });
 
-  info[id][vidId]["procs"]?.on("exit", (code) => {
+  info[id][vidId]["procs"]?.on("exit", async (code) => {
     logger.info(id + " stream is done. status: " + code);
     if (code == 0 || code == 1) {
       delete info[id][vidId]["procs"];
@@ -558,7 +558,7 @@ const recordStream = (id: string, vidId: string) => {
         ...info[id][vidId],
         status: InfoStatus.MERGING,
       };
-      mergeVideo(id, vidId);
+      await mergeVideo(id, vidId);
     }
   });
 
@@ -878,7 +878,14 @@ app.get("/", function (req, res) {
     info,
     streamerIds,
     InfoStatus,
-    StatusMessage: ["온라인", "준비 중", "녹화 중", "업로딩 중", "대기 중"],
+    statusMessage: [
+      "온라인",
+      "준비 중",
+      "녹화 중",
+      "업로딩 중",
+      "대기 중",
+      "동영상 처리중",
+    ],
     errorCount: errorCount,
   });
 });
