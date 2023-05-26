@@ -478,7 +478,7 @@ const mergeVideo = (id, vidId) => {
                 data += "file " + fileName + ".ts" + "\n";
             }
             fs_1.default.writeFile(inputFile, data, "utf8", function (error) {
-                var _a;
+                var _a, _b, _c;
                 if (error)
                     throw error;
                 info[id][vidId].procs = (0, child_process_1.spawn)("ffmpeg", [
@@ -492,7 +492,10 @@ const mergeVideo = (id, vidId) => {
                     "copy",
                     root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
                 ]); //return code: 3221225786, 130;
-                (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
+                (_b = (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.stdout) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
+                    winston_1.default.info(data);
+                });
+                (_c = info[id][vidId].procs) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
                     winston_1.default.info(id + " merge is done. status: " + code);
                     for (const fileName of info[id][vidId].fileName) {
                         fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -776,7 +779,7 @@ const temp = () => {
                 changeTime: [1684992595.75, 1685007567.792],
                 quality: "1080p60",
                 status: 4,
-                fileName: ["40334377559", "40334377559_1"],
+                fileName: ["40334377559"],
                 patCheck: 0,
             },
         },

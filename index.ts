@@ -600,6 +600,9 @@ const mergeVideo = (id: string, vidId: string) => {
           "copy",
           root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         ]); //return code: 3221225786, 130;
+        info[id][vidId].procs?.stdout?.on("data", (data) => {
+          logger.info(data);
+        });
         info[id][vidId].procs?.on("exit", async (code) => {
           logger.info(id + " merge is done. status: " + code);
           for (const fileName of info[id][vidId].fileName) {
@@ -915,7 +918,7 @@ const temp = () => {
         changeTime: [1684992595.75, 1685007567.792],
         quality: "1080p60",
         status: 4,
-        fileName: ["40334377559", "40334377559_1"],
+        fileName: ["40334377559"],
         patCheck: 0,
       },
     },
