@@ -757,37 +757,6 @@ app.get("/redirect", function (req, res) {
   });
 });
 */
-const temp = () => {
-    info = {
-        paka9999: {},
-        dopa24: {
-            "40332177031": {
-                title: "2시 언저리",
-                game: ["League of Legends", "Warcraft III", "StarCraft"],
-                changeTime: [1684992595.75, 1685007567.792, 1685033547.274],
-                quality: "1080p60",
-                status: 4,
-                fileName: ["40332177031"],
-                patCheck: 0,
-            },
-        },
-        pikra10: {},
-        xkwhd: {},
-        aba4647: {
-            "40334880391": {
-                title: "5km 뛰고 온 사람",
-                game: ["Just Chatting", "League of Legends"],
-                changeTime: [1685020008.36, 1685021008.36],
-                quality: "1080p60",
-                status: 4,
-                fileName: ["40334880391"],
-                patCheck: 0,
-            },
-        },
-        tmxk319: {},
-    };
-    winston_1.default.info("success to load info: " + JSON.stringify(info));
-};
 const checkVideoList = () => {
     if (fs_1.default.existsSync(root_path + "info.json"))
         info = require(root_path + "info.json");
@@ -798,9 +767,8 @@ app.listen(3000, function () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
         for (const streamer of streamerIds)
             info[streamer] = {};
-        //  checkVideoList();
+        checkVideoList();
         yield getToken();
-        temp();
         stream_url_params = createStreamParams(streamerIds);
         yield doProcess();
     });
