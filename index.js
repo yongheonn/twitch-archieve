@@ -359,9 +359,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     if (!vidIdList.includes(vidId)) {
                         if (isWaiting) {
                             info[streamerId][vidId] = Object.assign(Object.assign({}, info[streamerId][vidId]), { status: InfoStatus.UPLOADING });
-                            mergeVideo(streamerId, vidId)
-                                .then(() => null)
-                                .catch(() => null);
+                            mergeVideo(streamerId, vidId);
                         }
                         else if (isDefault || isReady) {
                             delete info[streamerId][vidId];
@@ -447,29 +445,24 @@ const recordStream = (id, vidId) => {
     (_b = (_a = info[id][vidId]["procs"]) === null || _a === void 0 ? void 0 : _a.stdout) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
         winston_1.default.info(data);
     });
-    (_c = info[id][vidId]["procs"]) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
+    (_c = info[id][vidId]["procs"]) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => {
         winston_1.default.info(id + " stream is done. status: " + code);
         if (code == 0 || code == 1) {
             delete info[id][vidId]["procs"];
             delete info[id][vidId].procs;
             info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.UPLOADING });
-            mergeVideo(id, vidId)
-                .then(() => null)
-                .catch(() => null);
+            mergeVideo(id, vidId);
         }
-    }));
+    });
     winston_1.default.info(id + " stream recording in session.");
 };
-const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
+const mergeVideo = (id, vidId) => {
     if (info[id][vidId].fileName.length === 1) {
         fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (err)
-                    throw err;
-                youtubeUpload(id, vidId)
-                    .then(() => null)
-                    .catch(() => null);
-            });
+            if (err)
+                throw err;
+            winston_1.default.info("rename done");
+            youtubeUpload(id, vidId);
         });
     }
     else if (info[id][vidId].fileName.length > 1) {
@@ -493,7 +486,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                 "copy",
                 root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
             ]); //return code: 3221225786, 130;
-            (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
+            (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => {
                 winston_1.default.info(id + " merge is done. status: " + code);
                 for (const fileName of info[id][vidId].fileName) {
                     fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -513,14 +506,12 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                         " is deleted.");
                 });
                 delete info[id][vidId].procs;
-                youtubeUpload(id, vidId)
-                    .then(() => null)
-                    .catch(() => null);
-            }));
+                youtubeUpload(id, vidId);
+            });
         });
     }
-});
-const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const youtubeUpload = (id, vidId) => {
     const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
     const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
     winston_1.default.info("youtube upload start");
@@ -670,7 +661,7 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
         }
     });
     winston_1.default.info("uploading ");
-});
+};
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
     var _e;
     winston_1.default.info(`exit code : ${code}`);
@@ -768,27 +759,37 @@ const temp = () => {
                 patCheck: 0,
             },
         },
-        pikra10: {},
+        pikra10: {
+            "40334377559": {
+                title: "흠...",
+                game: ["Just Chatting", "Warcraft III"],
+                changeTime: [1684992595.75, 1685007567.792],
+                quality: "1080p60",
+                status: 4,
+                fileName: ["40334377559", "40334377559_1"],
+                patCheck: 0,
+            },
+        },
         xkwhd: {},
         aba4647: {
-            "40333341079": {
-                title: "지뢰계 탑라이너",
-                game: ["League of Legends"],
-                changeTime: [1685020008.36],
+            "40334880391": {
+                title: "5km 뛰고 온 사람",
+                game: ["Just Chatting", "League of Legends"],
+                changeTime: [1685020008.36, 1685021008.36],
                 quality: "1080p60",
-                status: 0,
-                fileName: ["40333341079"],
+                status: 4,
+                fileName: ["40334880391"],
                 patCheck: 0,
             },
         },
         tmxk319: {},
     };
 };
-const checkVideoList = () => __awaiter(void 0, void 0, void 0, function* () {
+const checkVideoList = () => {
     if (fs_1.default.existsSync(root_path + "info.json"))
         info = require(root_path + "info.json");
     winston_1.default.info("success to load info: " + JSON.stringify(info));
-});
+};
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");

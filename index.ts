@@ -449,9 +449,7 @@ const checkLive = async () => {
                 ...info[streamerId][vidId],
                 status: InfoStatus.UPLOADING,
               };
-              mergeVideo(streamerId, vidId)
-                .then(() => null)
-                .catch(() => null);
+              mergeVideo(streamerId, vidId);
             } else if (isDefault || isReady) {
               delete info[streamerId][vidId];
             }
@@ -549,7 +547,7 @@ const recordStream = (id: string, vidId: string) => {
     logger.info(data);
   });
 
-  info[id][vidId]["procs"]?.on("exit", async (code) => {
+  info[id][vidId]["procs"]?.on("exit", (code) => {
     logger.info(id + " stream is done. status: " + code);
     if (code == 0 || code == 1) {
       delete info[id][vidId]["procs"];
@@ -559,25 +557,22 @@ const recordStream = (id: string, vidId: string) => {
         ...info[id][vidId],
         status: InfoStatus.UPLOADING,
       };
-      mergeVideo(id, vidId)
-        .then(() => null)
-        .catch(() => null);
+      mergeVideo(id, vidId);
     }
   });
 
   logger.info(id + " stream recording in session.");
 };
 
-const mergeVideo = async (id: string, vidId: string) => {
+const mergeVideo = (id: string, vidId: string) => {
   if (info[id][vidId].fileName.length === 1) {
     fs.rename(
       root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
       root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-      async function (err) {
+      function (err) {
         if (err) throw err;
-        youtubeUpload(id, vidId)
-          .then(() => null)
-          .catch(() => null);
+        logger.info("rename done");
+        youtubeUpload(id, vidId);
       }
     );
   } else if (info[id][vidId].fileName.length > 1) {
@@ -600,7 +595,7 @@ const mergeVideo = async (id: string, vidId: string) => {
         "copy",
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       ]); //return code: 3221225786, 130;
-      info[id][vidId].procs?.on("exit", async (code) => {
+      info[id][vidId].procs?.on("exit", (code) => {
         logger.info(id + " merge is done. status: " + code);
         for (const fileName of info[id][vidId].fileName) {
           fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -625,15 +620,13 @@ const mergeVideo = async (id: string, vidId: string) => {
           }
         );
         delete info[id][vidId].procs;
-        youtubeUpload(id, vidId)
-          .then(() => null)
-          .catch(() => null);
+        youtubeUpload(id, vidId);
       });
     });
   }
 };
 
-const youtubeUpload = async (id: string, vidId: string) => {
+const youtubeUpload = (id: string, vidId: string) => {
   const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
   const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
 
@@ -907,16 +900,26 @@ const temp = () => {
         patCheck: 0,
       },
     },
-    pikra10: {},
+    pikra10: {
+      "40334377559": {
+        title: "흠...",
+        game: ["Just Chatting", "Warcraft III"],
+        changeTime: [1684992595.75, 1685007567.792],
+        quality: "1080p60",
+        status: 4,
+        fileName: ["40334377559", "40334377559_1"],
+        patCheck: 0,
+      },
+    },
     xkwhd: {},
     aba4647: {
-      "40333341079": {
-        title: "지뢰계 탑라이너",
-        game: ["League of Legends"],
-        changeTime: [1685020008.36],
+      "40334880391": {
+        title: "5km 뛰고 온 사람",
+        game: ["Just Chatting", "League of Legends"],
+        changeTime: [1685020008.36, 1685021008.36],
         quality: "1080p60",
-        status: 0,
-        fileName: ["40333341079"],
+        status: 4,
+        fileName: ["40334880391"],
         patCheck: 0,
       },
     },
@@ -924,7 +927,7 @@ const temp = () => {
   };
 };
 
-const checkVideoList = async () => {
+const checkVideoList = () => {
   if (fs.existsSync(root_path + "info.json"))
     info = require(root_path + "info.json");
 
