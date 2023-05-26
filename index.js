@@ -457,65 +457,71 @@ const recordStream = (id, vidId) => {
     winston_1.default.info(id + " stream recording in session.");
 };
 const mergeVideo = (id, vidId) => {
-    winston_1.default.info("merge start");
-    if (info[id][vidId].fileName.length === 1) {
-        fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
-            if (err)
-                throw err;
-            winston_1.default.info("rename done");
-            youtubeUpload(id, vidId);
-        });
-    }
-    else if (info[id][vidId].fileName.length > 1) {
-        const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
-        let data = "";
-        for (const fileName of info[id][vidId].fileName) {
-            data += "file " + fileName + ".ts" + "\n";
-        }
-        fs_1.default.writeFile(inputFile, data, "utf8", function (error) {
-            var _a;
-            if (error)
-                throw error;
-            info[id][vidId].procs = (0, child_process_1.spawn)("ffmpeg", [
-                "-safe",
-                "0",
-                "-f",
-                "concat",
-                "-i",
-                inputFile,
-                "-c",
-                "copy",
-                root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-            ]); //return code: 3221225786, 130;
-            (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => {
-                winston_1.default.info(id + " merge is done. status: " + code);
-                for (const fileName of info[id][vidId].fileName) {
-                    fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
-                        if (err)
-                            throw err;
-                        winston_1.default.info(fileName + " is deleted.");
-                    });
-                }
-                fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + ".txt", (err) => {
-                    if (err)
-                        throw err;
-                    winston_1.default.info(root_path +
-                        id +
-                        "/" +
-                        info[id][vidId].fileName[0] +
-                        ".txt" +
-                        " is deleted.");
-                });
-                delete info[id][vidId].procs;
+    try {
+        winston_1.default.info(id + "_" + vidId + " merge start");
+        if (info[id][vidId].fileName.length === 1) {
+            fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
+                if (err)
+                    throw err;
+                winston_1.default.info(id + "_" + vidId + " rename done");
                 youtubeUpload(id, vidId);
             });
-        });
+        }
+        else if (info[id][vidId].fileName.length > 1) {
+            const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
+            let data = "";
+            for (const fileName of info[id][vidId].fileName) {
+                data += "file " + fileName + ".ts" + "\n";
+            }
+            fs_1.default.writeFile(inputFile, data, "utf8", function (error) {
+                var _a;
+                if (error)
+                    throw error;
+                info[id][vidId].procs = (0, child_process_1.spawn)("ffmpeg", [
+                    "-safe",
+                    "0",
+                    "-f",
+                    "concat",
+                    "-i",
+                    inputFile,
+                    "-c",
+                    "copy",
+                    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+                ]); //return code: 3221225786, 130;
+                (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => {
+                    winston_1.default.info(id + " merge is done. status: " + code);
+                    for (const fileName of info[id][vidId].fileName) {
+                        fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
+                            if (err)
+                                throw err;
+                            winston_1.default.info(fileName + " is deleted.");
+                        });
+                    }
+                    fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + ".txt", (err) => {
+                        if (err)
+                            throw err;
+                        winston_1.default.info(root_path +
+                            id +
+                            "/" +
+                            info[id][vidId].fileName[0] +
+                            ".txt" +
+                            " is deleted.");
+                    });
+                    delete info[id][vidId].procs;
+                    youtubeUpload(id, vidId);
+                });
+            });
+        }
+    }
+    catch (e) {
+        winston_1.default.error(e);
+        errorCount++;
     }
 };
 const youtubeUpload = (id, vidId) => {
     const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
     const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
-    winston_1.default.info("youtube upload start");
+    winston_1.default.info(id + "_" + vidId + " youtube upload start");
     // 3. UTC to KST (UTC + 9시간)
     const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
     const kr_curr = new Date(utc + KR_TIME_DIFF);

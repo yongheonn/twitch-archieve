@@ -565,65 +565,70 @@ const recordStream = (id: string, vidId: string) => {
 };
 
 const mergeVideo = (id: string, vidId: string) => {
-  logger.info("merge start");
-  if (info[id][vidId].fileName.length === 1) {
-    fs.rename(
-      root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
-      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-      function (err) {
-        if (err) throw err;
-        logger.info("rename done");
-        youtubeUpload(id, vidId);
-      }
-    );
-  } else if (info[id][vidId].fileName.length > 1) {
-    const inputFile =
-      root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
-    let data = "";
-    for (const fileName of info[id][vidId].fileName) {
-      data += "file " + fileName + ".ts" + "\n";
-    }
-    fs.writeFile(inputFile, data, "utf8", function (error) {
-      if (error) throw error;
-      info[id][vidId].procs = spawn("ffmpeg", [
-        "-safe",
-        "0",
-        "-f",
-        "concat",
-        "-i",
-        inputFile,
-        "-c",
-        "copy",
+  try {
+    logger.info(id + "_" + vidId + " merge start");
+    if (info[id][vidId].fileName.length === 1) {
+      fs.rename(
+        root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-      ]); //return code: 3221225786, 130;
-      info[id][vidId].procs?.on("exit", (code) => {
-        logger.info(id + " merge is done. status: " + code);
-        for (const fileName of info[id][vidId].fileName) {
-          fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
-            if (err) throw err;
-
-            logger.info(fileName + " is deleted.");
-          });
+        function (err) {
+          if (err) throw err;
+          logger.info(id + "_" + vidId + " rename done");
+          youtubeUpload(id, vidId);
         }
-        fs.unlink(
-          root_path + id + "/" + info[id][vidId].fileName[0] + ".txt",
-          (err) => {
-            if (err) throw err;
+      );
+    } else if (info[id][vidId].fileName.length > 1) {
+      const inputFile =
+        root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
+      let data = "";
+      for (const fileName of info[id][vidId].fileName) {
+        data += "file " + fileName + ".ts" + "\n";
+      }
+      fs.writeFile(inputFile, data, "utf8", function (error) {
+        if (error) throw error;
+        info[id][vidId].procs = spawn("ffmpeg", [
+          "-safe",
+          "0",
+          "-f",
+          "concat",
+          "-i",
+          inputFile,
+          "-c",
+          "copy",
+          root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+        ]); //return code: 3221225786, 130;
+        info[id][vidId].procs?.on("exit", (code) => {
+          logger.info(id + " merge is done. status: " + code);
+          for (const fileName of info[id][vidId].fileName) {
+            fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
+              if (err) throw err;
 
-            logger.info(
-              root_path +
-                id +
-                "/" +
-                info[id][vidId].fileName[0] +
-                ".txt" +
-                " is deleted."
-            );
+              logger.info(fileName + " is deleted.");
+            });
           }
-        );
-        delete info[id][vidId].procs;
-        youtubeUpload(id, vidId);
+          fs.unlink(
+            root_path + id + "/" + info[id][vidId].fileName[0] + ".txt",
+            (err) => {
+              if (err) throw err;
+
+              logger.info(
+                root_path +
+                  id +
+                  "/" +
+                  info[id][vidId].fileName[0] +
+                  ".txt" +
+                  " is deleted."
+              );
+            }
+          );
+          delete info[id][vidId].procs;
+          youtubeUpload(id, vidId);
+        });
       });
-    });
+    }
+  } catch (e) {
+    logger.error(e);
+    errorCount++;
   }
 };
 
@@ -631,7 +636,7 @@ const youtubeUpload = (id: string, vidId: string) => {
   const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
   const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
 
-  logger.info("youtube upload start");
+  logger.info(id + "_" + vidId + " youtube upload start");
   // 3. UTC to KST (UTC + 9시간)
   const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
   const kr_curr = new Date(utc + KR_TIME_DIFF);
