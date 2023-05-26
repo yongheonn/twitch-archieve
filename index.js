@@ -684,9 +684,9 @@ process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
             }
             else if (info[id][vidId].status === InfoStatus.UPLOADING) {
-                while (vidId in info[id]) {
-                    yield sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
-                }
+                //      while (vidId in info[id]) {
+                //       await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+                //    }
             }
         }
     }
@@ -715,9 +715,9 @@ process.once("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
             }
             else if (info[id][vidId].status === InfoStatus.UPLOADING) {
-                while (vidId in info[id]) {
-                    yield sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
-                }
+                //    while (vidId in info[id]) {
+                //      await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+                //    }
             }
         }
     }

@@ -827,9 +827,9 @@ process.on("exit", async (code) => {
         info[id][vidId]["game"].push("서버 프로그램 종료");
         info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
       } else if (info[id][vidId].status === InfoStatus.UPLOADING) {
-        while (vidId in info[id]) {
-          await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
-        }
+        //      while (vidId in info[id]) {
+        //       await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+        //    }
       }
     }
   }
@@ -858,9 +858,9 @@ process.once("SIGINT", async () => {
         info[id][vidId]["game"].push("서버 프로그램 종료");
         info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
       } else if (info[id][vidId].status === InfoStatus.UPLOADING) {
-        while (vidId in info[id]) {
-          await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
-        }
+        //    while (vidId in info[id]) {
+        //      await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+        //    }
       }
     }
   }
