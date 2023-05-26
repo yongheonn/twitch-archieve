@@ -664,6 +664,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
     while (fromIndex !== -1) {
       fromIndex = info[id][vidId].game.indexOf(exceptGame, fromIndex);
       exceptGameIndex.push(fromIndex);
+      logger.info("except index: " + fromIndex);
     }
   }
 

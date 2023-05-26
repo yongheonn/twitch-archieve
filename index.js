@@ -538,6 +538,7 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
         while (fromIndex !== -1) {
             fromIndex = info[id][vidId].game.indexOf(exceptGame, fromIndex);
             exceptGameIndex.push(fromIndex);
+            winston_1.default.info("except index: " + fromIndex);
         }
     }
     let description = "00:00:00 ";
