@@ -793,6 +793,7 @@ const temp = () => {
         },
         tmxk319: {},
     };
+    winston_1.default.info("success to load info: " + JSON.stringify(info));
 };
 const checkVideoList = () => {
     if (fs_1.default.existsSync(root_path + "info.json"))
@@ -804,7 +805,7 @@ app.listen(3000, function () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
         for (const streamer of streamerIds)
             info[streamer] = {};
-        checkVideoList();
+        //  checkVideoList();
         yield getToken();
         temp();
         stream_url_params = createStreamParams(streamerIds);

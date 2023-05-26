@@ -939,6 +939,7 @@ const temp = () => {
     },
     tmxk319: {},
   };
+  logger.info("success to load info: " + JSON.stringify(info));
 };
 
 const checkVideoList = () => {
@@ -950,7 +951,7 @@ const checkVideoList = () => {
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
   for (const streamer of streamerIds) info[streamer] = {};
-  checkVideoList();
+  //  checkVideoList();
   await getToken();
   temp();
   stream_url_params = createStreamParams(streamerIds);
