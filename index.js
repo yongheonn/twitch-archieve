@@ -274,7 +274,9 @@ const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* 
     catch (e) {
         winston_1.default.error("quality error: " + e);
         errorCount++;
+        return false;
     }
+    return false;
 });
 const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
     var _d;

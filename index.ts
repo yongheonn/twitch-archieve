@@ -326,7 +326,9 @@ const checkQuality = async (id: string, vidId: string) => {
   } catch (e) {
     logger.error("quality error: " + e);
     errorCount++;
+    return false;
   }
+  return false;
 };
 
 const checkLive = async () => {
