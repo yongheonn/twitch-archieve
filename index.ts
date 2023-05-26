@@ -571,10 +571,10 @@ const mergeVideo = (id: string, vidId: string) => {
       fs.rename(
         root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-        function (err) {
+        async function (err) {
           if (err) throw err;
           logger.info(id + "_" + vidId + " rename done");
-          youtubeUpload(id, vidId);
+          await youtubeUpload(id, vidId);
         }
       );
     } else if (info[id][vidId].fileName.length > 1) {
@@ -597,7 +597,7 @@ const mergeVideo = (id: string, vidId: string) => {
           "copy",
           root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         ]); //return code: 3221225786, 130;
-        info[id][vidId].procs?.on("exit", (code) => {
+        info[id][vidId].procs?.on("exit", async (code) => {
           logger.info(id + " merge is done. status: " + code);
           for (const fileName of info[id][vidId].fileName) {
             fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -622,7 +622,7 @@ const mergeVideo = (id: string, vidId: string) => {
             }
           );
           delete info[id][vidId].procs;
-          youtubeUpload(id, vidId);
+          await youtubeUpload(id, vidId);
         });
       });
     }
@@ -632,7 +632,7 @@ const mergeVideo = (id: string, vidId: string) => {
   }
 };
 
-const youtubeUpload = (id: string, vidId: string) => {
+const youtubeUpload = async (id: string, vidId: string) => {
   const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
   const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
 
@@ -783,28 +783,27 @@ const youtubeUpload = (id: string, vidId: string) => {
     },
   };
   logger.info("upload start ");
-  youtube.videos.insert(config, (err: any, data: any) => {
-    if (err) logger.error("err: " + err);
-    else {
-      logger.info("response: " + JSON.stringify(data));
-      fs.unlink(
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-        (err) => {
-          if (err) throw err;
+  const response = await youtube.videos.insert(config);
+  if (response.status != 200) logger.error("err: uploadding error");
+  else {
+    logger.info("response: " + JSON.stringify(response.data));
+    fs.unlink(
+      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+      (err) => {
+        if (err) throw err;
 
-          logger.info(
-            root_path +
-              id +
-              "/" +
-              info[id][vidId].fileName[0] +
-              "_final.ts" +
-              " is deleted."
-          );
-          delete info[id][vidId];
-        }
-      );
-    }
-  });
+        logger.info(
+          root_path +
+            id +
+            "/" +
+            info[id][vidId].fileName[0] +
+            "_final.ts" +
+            " is deleted."
+        );
+        delete info[id][vidId];
+      }
+    );
+  }
   logger.info("uploading ");
 };
 

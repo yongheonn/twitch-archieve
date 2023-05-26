@@ -461,10 +461,12 @@ const mergeVideo = (id, vidId) => {
         winston_1.default.info(id + "_" + vidId + " merge start");
         if (info[id][vidId].fileName.length === 1) {
             fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
-                if (err)
-                    throw err;
-                winston_1.default.info(id + "_" + vidId + " rename done");
-                youtubeUpload(id, vidId);
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (err)
+                        throw err;
+                    winston_1.default.info(id + "_" + vidId + " rename done");
+                    yield youtubeUpload(id, vidId);
+                });
             });
         }
         else if (info[id][vidId].fileName.length > 1) {
@@ -488,7 +490,7 @@ const mergeVideo = (id, vidId) => {
                     "copy",
                     root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
                 ]); //return code: 3221225786, 130;
-                (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => {
+                (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(this, void 0, void 0, function* () {
                     winston_1.default.info(id + " merge is done. status: " + code);
                     for (const fileName of info[id][vidId].fileName) {
                         fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -508,8 +510,8 @@ const mergeVideo = (id, vidId) => {
                             " is deleted.");
                     });
                     delete info[id][vidId].procs;
-                    youtubeUpload(id, vidId);
-                });
+                    yield youtubeUpload(id, vidId);
+                }));
             });
         }
     }
@@ -518,7 +520,7 @@ const mergeVideo = (id, vidId) => {
         errorCount++;
     }
 };
-const youtubeUpload = (id, vidId) => {
+const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
     const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
     const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
     winston_1.default.info(id + "_" + vidId + " youtube upload start");
@@ -649,26 +651,25 @@ const youtubeUpload = (id, vidId) => {
         },
     };
     winston_1.default.info("upload start ");
-    youtube.videos.insert(config, (err, data) => {
-        if (err)
-            winston_1.default.error("err: " + err);
-        else {
-            winston_1.default.info("response: " + JSON.stringify(data));
-            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
-                if (err)
-                    throw err;
-                winston_1.default.info(root_path +
-                    id +
-                    "/" +
-                    info[id][vidId].fileName[0] +
-                    "_final.ts" +
-                    " is deleted.");
-                delete info[id][vidId];
-            });
-        }
-    });
+    const response = yield youtube.videos.insert(config);
+    if (response.status != 200)
+        winston_1.default.error("err: uploadding error");
+    else {
+        winston_1.default.info("response: " + JSON.stringify(response.data));
+        fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
+            if (err)
+                throw err;
+            winston_1.default.info(root_path +
+                id +
+                "/" +
+                info[id][vidId].fileName[0] +
+                "_final.ts" +
+                " is deleted.");
+            delete info[id][vidId];
+        });
+    }
     winston_1.default.info("uploading ");
-};
+});
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
     var _e;
     winston_1.default.info(`exit code : ${code}`);
