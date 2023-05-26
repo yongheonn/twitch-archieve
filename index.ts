@@ -742,6 +742,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
       " ~ final " +
       info[id][vidId].game.at(-1);
   }
+  logger.info(id + "_" + vidId + " readStream start");
   const media = fs.createReadStream(
     root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
   );

@@ -611,6 +611,7 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
                 " ~ final " +
                 info[id][vidId].game.at(-1);
     }
+    winston_1.default.info(id + "_" + vidId + " readStream start");
     const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
     winston_1.default.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
     const oauth2Client = new googleapis_1.google.auth.OAuth2("1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com", "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", "http://localhost:3000/redirect");
