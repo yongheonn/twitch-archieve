@@ -308,6 +308,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     };
                     if (!isExceptGame) {
                         isValid = yield checkQuality(stream["user_login"], stream["id"]);
+                        winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
                         info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
                     }
                 }
@@ -350,6 +351,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);
                 winston_1.default.info(stream["user_login"] + " is online");
             }
+            winston_1.default.info("start check stream status");
             const vidIdList = [];
             for (const stream of streamList)
                 vidIdList.push(stream.id);

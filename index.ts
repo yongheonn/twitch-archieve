@@ -361,6 +361,9 @@ const checkLive = async () => {
           };
           if (!isExceptGame) {
             isValid = await checkQuality(stream["user_login"], stream["id"]);
+            logger.info(
+              stream["user_login"] + "_" + stream["id"] + " quality check done"
+            );
             info[stream["user_login"]][stream["id"]].fileName.push(
               stream["id"]
             );
@@ -437,6 +440,7 @@ const checkLive = async () => {
         );
         logger.info(stream["user_login"] + " is online");
       }
+      logger.info("start check stream status");
       const vidIdList = [];
       for (const stream of streamList) vidIdList.push(stream.id);
       for (const streamerId of streamerIds) {
