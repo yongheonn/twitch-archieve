@@ -457,6 +457,7 @@ const recordStream = (id, vidId) => {
     winston_1.default.info(id + " stream recording in session.");
 };
 const mergeVideo = (id, vidId) => {
+    winston_1.default.info("merge start");
     if (info[id][vidId].fileName.length === 1) {
         fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
             if (err)

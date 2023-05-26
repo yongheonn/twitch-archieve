@@ -565,6 +565,7 @@ const recordStream = (id: string, vidId: string) => {
 };
 
 const mergeVideo = (id: string, vidId: string) => {
+  logger.info("merge start");
   if (info[id][vidId].fileName.length === 1) {
     fs.rename(
       root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
