@@ -905,17 +905,7 @@ const temp = () => {
         patCheck: 0,
       },
     },
-    pikra10: {
-      "40334377559": {
-        title: "흠...",
-        game: ["Just Chatting", "Warcraft III"],
-        changeTime: [1684992595.75, 1685007567.792],
-        quality: "1080p60",
-        status: 4,
-        fileName: ["40334377559"],
-        patCheck: 0,
-      },
-    },
+    pikra10: {},
     xkwhd: {},
     aba4647: {
       "40334880391": {
