@@ -37,7 +37,7 @@ let offlineStreamers = [...streamerIds];
 let info = {};
 let quality = "1080p60";
 const exceptGames = ["League of Legends", "서버 프로그램 종료"]; //
-const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
+const refresh = 5; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
 const quality_in_title = true; // True인 경우 제목에 품질 정보 추가
@@ -428,7 +428,6 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                     }
                 }
             }
-            yield sleep(refresh);
         }
     }
 });
