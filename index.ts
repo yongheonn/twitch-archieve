@@ -67,6 +67,7 @@ const InfoStatus = {
   RECORDING: 2,
   UPLOADING: 3,
   WAITING: 4,
+  MERGING: 5,
 };
 
 Object.freeze(InfoStatus);
@@ -447,7 +448,7 @@ const checkLive = async () => {
             if (isWaiting) {
               info[streamerId][vidId] = {
                 ...info[streamerId][vidId],
-                status: InfoStatus.UPLOADING,
+                status: InfoStatus.MERGING,
               };
               mergeVideo(streamerId, vidId);
             } else if (isDefault || isReady) {
@@ -555,7 +556,7 @@ const recordStream = (id: string, vidId: string) => {
       delete info[id][vidId].procs;
       info[id][vidId] = {
         ...info[id][vidId],
-        status: InfoStatus.UPLOADING,
+        status: InfoStatus.MERGING,
       };
       mergeVideo(id, vidId);
     }
@@ -573,7 +574,7 @@ const mergeVideo = (id: string, vidId: string) => {
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         async function (err) {
           if (err) {
-            logger.error(id + "_" + vidId + "merge error");
+            logger.error(id + "_" + vidId + " merge error");
             throw err;
           }
           logger.info(id + "_" + vidId + " rename done");
@@ -607,7 +608,10 @@ const mergeVideo = (id: string, vidId: string) => {
           logger.info(id + " merge is done. status: " + code);
           for (const fileName of info[id][vidId].fileName) {
             fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
-              if (err) throw err;
+              if (err) {
+                logger.error(id + "_" + fileName + " ts delete error");
+                throw err;
+              }
 
               logger.info(fileName + " is deleted.");
             });
@@ -615,7 +619,12 @@ const mergeVideo = (id: string, vidId: string) => {
           fs.unlink(
             root_path + id + "/" + info[id][vidId].fileName[0] + ".txt",
             (err) => {
-              if (err) throw err;
+              if (err) {
+                logger.error(
+                  id + "_" + info[id][vidId].fileName[0] + ".txt delete error"
+                );
+                throw err;
+              }
 
               logger.info(
                 root_path +
@@ -789,6 +798,7 @@ const youtubeUpload = async (id: string, vidId: string) => {
     },
   };
   logger.info("upload start ");
+  info[id][vidId].status = InfoStatus.UPLOADING;
   const response = await youtube.videos.insert(config);
   if (response.status != 200) logger.error("err: uploadding error");
   else {
@@ -946,7 +956,6 @@ const checkVideoList = () => {
 };
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
-  logger.error("error test");
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
   await getToken();

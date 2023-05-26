@@ -57,6 +57,7 @@ const InfoStatus = {
     RECORDING: 2,
     UPLOADING: 3,
     WAITING: 4,
+    MERGING: 5,
 };
 Object.freeze(InfoStatus);
 // Initialize Express and middlewares
@@ -358,7 +359,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     const isReady = info[streamerId][vidId]["status"] === InfoStatus.READY;
                     if (!vidIdList.includes(vidId)) {
                         if (isWaiting) {
-                            info[streamerId][vidId] = Object.assign(Object.assign({}, info[streamerId][vidId]), { status: InfoStatus.UPLOADING });
+                            info[streamerId][vidId] = Object.assign(Object.assign({}, info[streamerId][vidId]), { status: InfoStatus.MERGING });
                             mergeVideo(streamerId, vidId);
                         }
                         else if (isDefault || isReady) {
@@ -450,7 +451,7 @@ const recordStream = (id, vidId) => {
         if (code == 0 || code == 1) {
             delete info[id][vidId]["procs"];
             delete info[id][vidId].procs;
-            info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.UPLOADING });
+            info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.MERGING });
             mergeVideo(id, vidId);
         }
     });
@@ -463,7 +464,7 @@ const mergeVideo = (id, vidId) => {
             fs_1.default.rename(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err) {
                 return __awaiter(this, void 0, void 0, function* () {
                     if (err) {
-                        winston_1.default.error(id + "_" + vidId + "merge error");
+                        winston_1.default.error(id + "_" + vidId + " merge error");
                         throw err;
                     }
                     winston_1.default.info(id + "_" + vidId + " rename done");
@@ -499,14 +500,18 @@ const mergeVideo = (id, vidId) => {
                     winston_1.default.info(id + " merge is done. status: " + code);
                     for (const fileName of info[id][vidId].fileName) {
                         fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
-                            if (err)
+                            if (err) {
+                                winston_1.default.error(id + "_" + fileName + " ts delete error");
                                 throw err;
+                            }
                             winston_1.default.info(fileName + " is deleted.");
                         });
                     }
                     fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + ".txt", (err) => {
-                        if (err)
+                        if (err) {
+                            winston_1.default.error(id + "_" + info[id][vidId].fileName[0] + ".txt delete error");
                             throw err;
+                        }
                         winston_1.default.info(root_path +
                             id +
                             "/" +
@@ -656,6 +661,7 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
         },
     };
     winston_1.default.info("upload start ");
+    info[id][vidId].status = InfoStatus.UPLOADING;
     const response = yield youtube.videos.insert(config);
     if (response.status != 200)
         winston_1.default.error("err: uploadding error");
@@ -806,7 +812,6 @@ const checkVideoList = () => {
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
-        winston_1.default.error("error test");
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();
