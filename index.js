@@ -62,9 +62,9 @@ const InfoStatus = {
 Object.freeze(InfoStatus);
 // Initialize Express and middlewares
 var app = (0, express_1.default)();
-function sleep(ms) {
+function sleep(seconds) {
     return new Promise((resolve) => {
-        setTimeout(resolve, ms);
+        setTimeout(resolve, seconds * 1000);
     });
 }
 function doGetRequest(option) {
@@ -306,9 +306,10 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                         patCheck: 0,
                         procs: undefined,
                     };
-                    if (!isExceptGame)
+                    if (!isExceptGame) {
                         isValid = yield checkQuality(stream["user_login"], stream["id"]);
-                    info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
+                        info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
+                    }
                 }
                 const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
                     InfoStatus.RECORDING;
@@ -327,12 +328,12 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     delete info[stream["user_login"]][stream["id"]]["procs"];
                     info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
                     info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
-                    return;
+                    continue;
                 }
                 if (!isExceptGame && isRecording && isNewGame) {
                     info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
                     info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
-                    return;
+                    continue;
                 }
                 if (!isExceptGame &&
                     (isWaiting ||
@@ -344,7 +345,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     info[stream["user_login"]][stream["id"]].fileName.push(info[stream["user_login"]][stream["id"]].fileName[0] +
                         "_" +
                         info[stream["user_login"]][stream["id"]].fileName.length);
-                    return;
+                    continue;
                 }
                 offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);
                 winston_1.default.info(stream["user_login"] + " is online");
@@ -411,7 +412,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
 const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
     while (true) {
         yield checkLive();
-        yield sleep(refresh * 1000);
+        yield sleep(refresh);
         if (info) {
             for (const id in info) {
                 for (const vidId in info[id]) {
@@ -427,7 +428,7 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                     }
                 }
             }
-            yield sleep(refresh * 1000);
+            yield sleep(refresh);
         }
     }
 });
@@ -536,23 +537,6 @@ const youtubeUpload = (id, vidId) => __awaiter(void 0, void 0, void 0, function*
             exceptGameIndex.push(fromIndex);
         }
     }
-    const checkFps = (0, child_process_1.spawn)("ffprobe", [
-        "-v",
-        "error",
-        "-select_streams",
-        "v:0",
-        "-show_entries",
-        "stream=avg_frame_rate",
-        "-of",
-        "default=nw=1:nk=1",
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-    ]);
-    checkFps.stdout.on("data", (data) => {
-        winston_1.default.info(data);
-        const data2 = String(data).split("/");
-        const fps = Number(data2[0]) / Number(data2[1]);
-        winston_1.default.info(info[id][vidId].fileName[0] + "_final.ts" + " fps: " + fps);
-    });
     let description = "00:00:00 ";
     let startAt = 0;
     let endAt = 0;

@@ -93,9 +93,9 @@ interface Stream {
 // Initialize Express and middlewares
 var app = express();
 
-function sleep(ms: number) {
+function sleep(seconds: number) {
   return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+    setTimeout(resolve, seconds * 1000);
   });
 }
 
@@ -359,9 +359,12 @@ const checkLive = async () => {
             patCheck: 0,
             procs: undefined,
           };
-          if (!isExceptGame)
+          if (!isExceptGame) {
             isValid = await checkQuality(stream["user_login"], stream["id"]);
-          info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
+            info[stream["user_login"]][stream["id"]].fileName.push(
+              stream["id"]
+            );
+          }
         }
 
         const isRecording =
@@ -393,7 +396,7 @@ const checkLive = async () => {
           info[stream["user_login"]][stream["id"]]["changeTime"].push(
             new Date().getTime() / 1000
           );
-          return;
+          continue;
         }
 
         if (!isExceptGame && isRecording && isNewGame) {
@@ -403,7 +406,7 @@ const checkLive = async () => {
           info[stream["user_login"]][stream["id"]]["changeTime"].push(
             new Date().getTime() / 1000
           );
-          return;
+          continue;
         }
 
         if (
@@ -426,7 +429,7 @@ const checkLive = async () => {
               "_" +
               info[stream["user_login"]][stream["id"]].fileName.length
           );
-          return;
+          continue;
         }
 
         offlineStreamers = offlineStreamers.filter(
@@ -504,7 +507,7 @@ const checkLive = async () => {
 const doProcess = async () => {
   while (true) {
     await checkLive();
-    await sleep(refresh * 1000);
+    await sleep(refresh);
     if (info) {
       for (const id in info) {
         for (const vidId in info[id]) {
@@ -522,7 +525,7 @@ const doProcess = async () => {
           }
         }
       }
-      await sleep(refresh * 1000);
+      await sleep(refresh);
     }
   }
 };
@@ -658,25 +661,6 @@ const youtubeUpload = async (id: string, vidId: string) => {
       exceptGameIndex.push(fromIndex);
     }
   }
-
-  const checkFps = spawn("ffprobe", [
-    "-v",
-    "error",
-    "-select_streams",
-    "v:0",
-    "-show_entries",
-    "stream=avg_frame_rate",
-    "-of",
-    "default=nw=1:nk=1",
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-  ]);
-
-  checkFps.stdout.on("data", (data) => {
-    logger.info(data);
-    const data2 = String(data).split("/");
-    const fps = Number(data2[0]) / Number(data2[1]);
-    logger.info(info[id][vidId].fileName[0] + "_final.ts" + " fps: " + fps);
-  });
 
   let description = "00:00:00 ";
 
