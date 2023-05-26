@@ -26,7 +26,7 @@ let offlineStreamers: string[] = [...streamerIds];
 let info: Info = {};
 let quality = "1080p60";
 const exceptGames = ["League of Legends", "서버 프로그램 종료"]; //
-const refresh = 5; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
+const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
 const quality_in_title = true; // True인 경우 제목에 품질 정보 추가
@@ -68,6 +68,7 @@ const InfoStatus = {
   UPLOADING: 3,
   WAITING: 4,
   MERGING: 5,
+  WAIT_UPLOADING: 6,
 };
 
 Object.freeze(InfoStatus);
@@ -657,7 +658,7 @@ const youtubeUpload = (id: string, vidId: string) => {
   const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
   const kr_curr = new Date(utc + KR_TIME_DIFF);
   const title =
-    id + "-" + kr_curr.toLocaleString() + "_" + info[id][vidId]["title"];
+    id + " " + kr_curr.toLocaleString() + " " + info[id][vidId]["title"];
   const exceptGameIndex = [];
   let fromIndex = 0;
   for (const exceptGame of exceptGames) {
@@ -785,8 +786,10 @@ const youtubeUpload = (id: string, vidId: string) => {
   logger.info("upload start ");
   info[id][vidId].status = InfoStatus.UPLOADING;
   youtube.videos.insert(config, (err: any, data: any) => {
-    if (err) logger.error("err: uploadding error");
-    else {
+    if (err) {
+      logger.error("err: uploading error: " + err);
+      info[id][vidId].status = InfoStatus.WAIT_UPLOADING;
+    } else {
       logger.info("response: " + JSON.stringify(data));
       fs.unlink(
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
@@ -878,7 +881,8 @@ app.get("/", function (req, res) {
       "녹화 중",
       "업로딩 중",
       "대기 중",
-      "동영상 처리중",
+      "동영상 처리 중",
+      "유튜브 할당량 대기 중",
     ],
     errorCount: errorCount,
   });
