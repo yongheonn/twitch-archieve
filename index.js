@@ -457,7 +457,7 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
         sortObj.sort(function (a, b) {
             return b[0] - a[0];
         });
-        if (sortObj) {
+        if (sortObj.length !== 0) {
             winston_1.default.info("uploading sort start: " + sortObj);
             for (const queue of sortObj) {
                 youtubeUpload(queue[1], queue[2]);

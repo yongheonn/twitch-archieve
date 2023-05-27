@@ -558,7 +558,7 @@ const processYoutubeQueue = async () => {
     sortObj.sort(function (a: any, b: any) {
       return b[0] - a[0];
     });
-    if (sortObj) {
+    if (sortObj.length !== 0) {
       logger.info("uploading sort start: " + sortObj);
       for (const queue of sortObj) {
         youtubeUpload(queue[1] as string, queue[2] as string);
