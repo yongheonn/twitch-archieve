@@ -14,6 +14,7 @@ const TWITCH_SECRET = "s8gfl3lvjq557d3klnrn73wecqejpj";
 let access_token = "";
 let stream_url_params = "";
 let errorCount = 0;
+let waitUploading = false;
 const streamerIds: string[] = [
   "paka9999",
   "dopa24",
@@ -25,6 +26,7 @@ const streamerIds: string[] = [
 let offlineStreamers: string[] = [...streamerIds];
 let info: Info = {};
 let quality = "1080p60";
+let resetTime = new Date();
 const exceptGames = ["League of Legends", "서버 프로그램 종료"]; //
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
@@ -53,6 +55,7 @@ interface InfoType {
   title: string;
   game: string[];
   changeTime: number[];
+  queueTime: number | undefined;
   quality: string;
   status: number;
   fileName: string[];
@@ -68,7 +71,7 @@ const InfoStatus = {
   UPLOADING: 3,
   WAITING: 4,
   MERGING: 5,
-  WAIT_UPLOADING: 6,
+  QUEUE: 6,
 };
 
 Object.freeze(InfoStatus);
@@ -355,6 +358,7 @@ const checkLive = async () => {
             title: stream["title"],
             game: [stream["game_name"]],
             changeTime: [new Date().getTime() / 1000],
+            queueTime: undefined,
             quality: quality,
             status: InfoStatus.DEFAULT,
             fileName: [],
@@ -532,6 +536,35 @@ const doProcess = async () => {
           }
         }
       }
+      processYoutubeQueue()
+        .then(() => null)
+        .catch(() => null);
+    }
+  }
+};
+
+const processYoutubeQueue = async () => {
+  const now = new Date();
+  if (now.getTime() > resetTime.getTime()) {
+    let sortObj = [];
+    for (const id in info) {
+      for (const vidId in info[id]) {
+        if (info[id][vidId].status == InfoStatus.QUEUE) {
+          sortObj.push([info[id][vidId].queueTime, id, vidId]);
+        }
+      }
+    }
+    sortObj.sort(function (a: any, b: any) {
+      return b[0] - a[0];
+    });
+    if (sortObj) {
+      for (const queue of sortObj) {
+        youtubeUpload(queue[1] as string, queue[2] as string);
+        while (waitUploading) {
+          await sleep(5);
+        }
+        if (new Date().getTime() < resetTime.getTime()) return;
+      }
     }
   }
 };
@@ -584,7 +617,7 @@ const mergeVideo = (id: string, vidId: string) => {
       );
 
       logger.info(id + "_" + vidId + " rename done");
-      youtubeUpload(id, vidId);
+      enqueue(id, vidId);
     } else if (info[id][vidId].fileName.length > 1) {
       const inputFile =
         root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -640,7 +673,7 @@ const mergeVideo = (id: string, vidId: string) => {
           }
         );
         delete info[id][vidId].procs;
-        youtubeUpload(id, vidId);
+        enqueue(id, vidId);
       });
     }
   } catch (e) {
@@ -650,6 +683,7 @@ const mergeVideo = (id: string, vidId: string) => {
 };
 
 const youtubeUpload = (id: string, vidId: string) => {
+  waitUploading = true;
   const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
   const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
 
@@ -788,7 +822,25 @@ const youtubeUpload = (id: string, vidId: string) => {
   youtube.videos.insert(config, (err: any, data: any) => {
     if (err) {
       logger.error("err: uploading error: " + err);
-      info[id][vidId].status = InfoStatus.WAIT_UPLOADING;
+      info[id][vidId].status = InfoStatus.QUEUE;
+      const now = new Date();
+      if (now.getHours() >= 7) {
+        resetTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() + 1,
+          7,
+          0
+        );
+      } else {
+        resetTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          7,
+          0
+        );
+      }
     } else {
       logger.info("response: " + JSON.stringify(data));
       fs.unlink(
@@ -808,9 +860,15 @@ const youtubeUpload = (id: string, vidId: string) => {
         }
       );
     }
+    waitUploading = false;
   });
 
   logger.info("uploading ");
+};
+
+const enqueue = (id: string, vidId: string) => {
+  info[id][vidId].status = InfoStatus.QUEUE;
+  info[id][vidId].queueTime = new Date().getTime();
 };
 
 process.on("exit", async (code) => {
@@ -825,12 +883,16 @@ process.on("exit", async (code) => {
         info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
       } else if (info[id][vidId].status === InfoStatus.UPLOADING) {
         while (vidId in info[id]) {
-          await sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+          await sleep(2); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
         }
       }
     }
   }
   fs.writeFileSync(root_path + "info.json", JSON.stringify(info));
+  fs.writeFileSync(
+    root_path + "reset_time.dat",
+    resetTime.getTime().toString()
+  );
   logger.info(`info.json : ${info}`);
   revokeToken();
   logger.info(`exit process complete`);
@@ -862,6 +924,10 @@ process.once("SIGINT", async () => {
     }
   }
   fs.writeFileSync(root_path + "info.json", JSON.stringify(info));
+  fs.writeFileSync(
+    root_path + "reset_time.dat",
+    resetTime.getTime().toString()
+  );
   logger.info(`info.json : ${info}`);
   revokeToken();
   logger.info(`exit process complete`);
@@ -882,7 +948,7 @@ app.get("/", function (req, res) {
       "업로딩 중",
       "대기 중",
       "동영상 처리 중",
-      "유튜브 할당량 대기 중",
+      "유튜브 업로딩 대기 중",
     ],
     errorCount: errorCount,
   });
@@ -911,10 +977,42 @@ const checkVideoList = () => {
 
   logger.info("success to load info: " + JSON.stringify(info));
 };
+
+const setDefaultResetTime = () => {
+  if (fs.existsSync(root_path + "reset_time.dat")) {
+    const data = fs.readFileSync("reset_time.dat", "utf8");
+    const beforeReset = new Date(Number(data));
+    const now = new Date();
+
+    if (beforeReset.getTime() <= now.getTime()) {
+      if (now.getHours() >= 7) {
+        resetTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          7,
+          0
+        );
+      } else {
+        resetTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - 1,
+          7,
+          0
+        );
+      }
+    } else {
+      resetTime = beforeReset;
+    }
+  }
+};
+
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
+  setDefaultResetTime();
   await getToken();
   stream_url_params = createStreamParams(streamerIds);
   await doProcess();

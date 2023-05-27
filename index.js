@@ -25,6 +25,7 @@ const TWITCH_SECRET = "s8gfl3lvjq557d3klnrn73wecqejpj";
 let access_token = "";
 let stream_url_params = "";
 let errorCount = 0;
+let waitUploading = false;
 const streamerIds = [
     "paka9999",
     "dopa24",
@@ -36,6 +37,7 @@ const streamerIds = [
 let offlineStreamers = [...streamerIds];
 let info = {};
 let quality = "1080p60";
+let resetTime = new Date();
 const exceptGames = ["League of Legends", "서버 프로그램 종료"]; //
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
@@ -58,7 +60,7 @@ const InfoStatus = {
     UPLOADING: 3,
     WAITING: 4,
     MERGING: 5,
-    WAIT_UPLOADING: 6,
+    QUEUE: 6,
 };
 Object.freeze(InfoStatus);
 // Initialize Express and middlewares
@@ -302,6 +304,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                         title: stream["title"],
                         game: [stream["game_name"]],
                         changeTime: [new Date().getTime() / 1000],
+                        queueTime: undefined,
                         quality: quality,
                         status: InfoStatus.DEFAULT,
                         fileName: [],
@@ -433,6 +436,35 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                     }
                 }
             }
+            processYoutubeQueue()
+                .then(() => null)
+                .catch(() => null);
+        }
+    }
+});
+const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* () {
+    const now = new Date();
+    if (now.getTime() > resetTime.getTime()) {
+        let sortObj = [];
+        for (const id in info) {
+            for (const vidId in info[id]) {
+                if (info[id][vidId].status == InfoStatus.QUEUE) {
+                    sortObj.push([info[id][vidId].queueTime, id, vidId]);
+                }
+            }
+        }
+        sortObj.sort(function (a, b) {
+            return b[0] - a[0];
+        });
+        if (sortObj) {
+            for (const queue of sortObj) {
+                youtubeUpload(queue[1], queue[2]);
+                while (waitUploading) {
+                    yield sleep(5);
+                }
+                if (new Date().getTime() < resetTime.getTime())
+                    return;
+            }
         }
     }
 });
@@ -469,7 +501,7 @@ const mergeVideo = (id, vidId) => {
         if (info[id][vidId].fileName.length === 1) {
             fs_1.default.renameSync(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
             winston_1.default.info(id + "_" + vidId + " rename done");
-            youtubeUpload(id, vidId);
+            enqueue(id, vidId);
         }
         else if (info[id][vidId].fileName.length > 1) {
             const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -516,7 +548,7 @@ const mergeVideo = (id, vidId) => {
                         " is deleted.");
                 });
                 delete info[id][vidId].procs;
-                youtubeUpload(id, vidId);
+                enqueue(id, vidId);
             }));
         }
     }
@@ -526,6 +558,7 @@ const mergeVideo = (id, vidId) => {
     }
 };
 const youtubeUpload = (id, vidId) => {
+    waitUploading = true;
     const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
     const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
     winston_1.default.info(id + "_" + vidId + " youtube upload start");
@@ -647,7 +680,14 @@ const youtubeUpload = (id, vidId) => {
     youtube.videos.insert(config, (err, data) => {
         if (err) {
             winston_1.default.error("err: uploading error: " + err);
-            info[id][vidId].status = InfoStatus.WAIT_UPLOADING;
+            info[id][vidId].status = InfoStatus.QUEUE;
+            const now = new Date();
+            if (now.getHours() >= 7) {
+                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 0);
+            }
+            else {
+                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0);
+            }
         }
         else {
             winston_1.default.info("response: " + JSON.stringify(data));
@@ -663,8 +703,13 @@ const youtubeUpload = (id, vidId) => {
                 delete info[id][vidId];
             });
         }
+        waitUploading = false;
     });
     winston_1.default.info("uploading ");
+};
+const enqueue = (id, vidId) => {
+    info[id][vidId].status = InfoStatus.QUEUE;
+    info[id][vidId].queueTime = new Date().getTime();
 };
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
     var _e;
@@ -680,12 +725,13 @@ process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
             }
             else if (info[id][vidId].status === InfoStatus.UPLOADING) {
                 while (vidId in info[id]) {
-                    yield sleep(refresh / 5); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
+                    yield sleep(2); //업로딩이 완료될 때까지 대기(delete info[id][vidId] 대기)
                 }
             }
         }
     }
     fs_1.default.writeFileSync(root_path + "info.json", JSON.stringify(info));
+    fs_1.default.writeFileSync(root_path + "reset_time.dat", resetTime.getTime().toString());
     winston_1.default.info(`info.json : ${info}`);
     revokeToken();
     winston_1.default.info(`exit process complete`);
@@ -717,6 +763,7 @@ process.once("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     fs_1.default.writeFileSync(root_path + "info.json", JSON.stringify(info));
+    fs_1.default.writeFileSync(root_path + "reset_time.dat", resetTime.getTime().toString());
     winston_1.default.info(`info.json : ${info}`);
     revokeToken();
     winston_1.default.info(`exit process complete`);
@@ -735,7 +782,7 @@ app.get("/", function (req, res) {
             "업로딩 중",
             "대기 중",
             "동영상 처리 중",
-            "유튜브 할당량 대기 중",
+            "유튜브 업로딩 대기 중",
         ],
         errorCount: errorCount,
     });
@@ -762,12 +809,31 @@ const checkVideoList = () => {
         info = require(root_path + "info.json");
     winston_1.default.info("success to load info: " + JSON.stringify(info));
 };
+const setDefaultResetTime = () => {
+    if (fs_1.default.existsSync(root_path + "reset_time.dat")) {
+        const data = fs_1.default.readFileSync("reset_time.dat", "utf8");
+        const beforeReset = new Date(Number(data));
+        const now = new Date();
+        if (beforeReset.getTime() <= now.getTime()) {
+            if (now.getHours() >= 7) {
+                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0);
+            }
+            else {
+                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 7, 0);
+            }
+        }
+        else {
+            resetTime = beforeReset;
+        }
+    }
+};
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();
+        setDefaultResetTime();
         yield getToken();
         stream_url_params = createStreamParams(streamerIds);
         yield doProcess();
