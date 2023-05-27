@@ -826,13 +826,93 @@ const setDefaultResetTime = () => {
             resetTime = beforeReset;
         }
     }
+    else {
+        const now = new Date();
+        if (now.getHours() >= 7) {
+            resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0);
+        }
+        else {
+            resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 7, 0);
+        }
+    }
+};
+const temp = () => {
+    info = {
+        paka9999: {},
+        dopa24: {
+            "40335101095": {
+                title: "5시 언저리",
+                game: ["Warcraft III", "StarCraft", "League of Legends", "StarCraft"],
+                changeTime: [
+                    1685110858.562, 1685111306.015, 1685115871.087, 1685122048.779,
+                ],
+                quality: "1080p60",
+                status: 6,
+                fileName: ["40335101095", "40335101095_1"],
+                pat: {
+                    token: {
+                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"dopa24","channel_id":536083731,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685112058,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+                        signature: "953033317b18a5fe8c1f9405f11ee361e506a497",
+                        __typename: "PlaybackAccessToken",
+                    },
+                    expire: 1685112058,
+                },
+                patCheck: 0,
+                queueTime: 1685120650000,
+            },
+        },
+        pikra10: {
+            "40337443591": {
+                title: "토요일",
+                game: ["Just Chatting", "서버 프로그램 종료"],
+                changeTime: [1685164066.66, 1685173188.174],
+                quality: "1080p60",
+                status: 4,
+                fileName: ["40337443591"],
+                pat: {
+                    token: {
+                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"pikra10","channel_id":194230187,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685165266,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+                        signature: "58df2742c912985d6f85ea6fe7152fcbf6b6a6d3",
+                        __typename: "PlaybackAccessToken",
+                    },
+                    expire: 1685165266,
+                },
+                patCheck: 0,
+                queueTime: undefined,
+            },
+        },
+        xkwhd: {
+            "40335613015": {
+                title: "9시 발로란트 고수내전",
+                game: ["VALORANT"],
+                changeTime: [1685110858.885],
+                quality: "1080p60",
+                status: 6,
+                fileName: ["40335613015"],
+                pat: {
+                    token: {
+                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"xkwhd","channel_id":175163251,"chansub":{"restricted_bitrates":[],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685112058,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+                        signature: "dcd84f7b351ec0df0090f5e2a551a5215de5ee4d",
+                        __typename: "PlaybackAccessToken",
+                    },
+                    expire: 1685112058,
+                },
+                patCheck: 0,
+                queueTime: 1685120640000,
+            },
+        },
+        aba4647: {},
+        tmxk319: {},
+    };
 };
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
+        console.log(new Date(2023, 4, 27, 2, 4).getTime());
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();
+        temp();
         setDefaultResetTime();
         yield getToken();
         stream_url_params = createStreamParams(streamerIds);
