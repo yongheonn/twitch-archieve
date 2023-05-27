@@ -838,57 +838,6 @@ const setDefaultResetTime = () => {
         }
     }
 };
-const temp = () => {
-    info = {
-        paka9999: {
-            "40337860231": {
-                title: "노데스 탑라이너",
-                game: ["League of Legends"],
-                changeTime: [1685177551.163],
-                quality: "1080p60",
-                status: 0,
-                fileName: [],
-                patCheck: 0,
-                queueTime: undefined,
-            },
-        },
-        dopa24: {},
-        pikra10: {
-            "40337443591": {
-                title: "토요일",
-                game: ["Just Chatting", "서버 프로그램 종료", "Just Chatting"],
-                changeTime: [1685164066.66, 1685173188.174, 1685177551.166],
-                quality: "1080p60",
-                status: 4,
-                fileName: ["40337443591", "40337443591_1"],
-                pat: {
-                    token: {
-                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"pikra10","channel_id":194230187,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685165266,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
-                        signature: "58df2742c912985d6f85ea6fe7152fcbf6b6a6d3",
-                        __typename: "PlaybackAccessToken",
-                    },
-                    expire: 1685165266,
-                },
-                patCheck: 0,
-                queueTime: undefined,
-            },
-        },
-        xkwhd: {},
-        aba4647: {},
-        tmxk319: {
-            "40337909591": {
-                title: "노데스 원딜러",
-                game: ["League of Legends"],
-                changeTime: [1685177551.165],
-                quality: "1080p60",
-                status: 0,
-                fileName: [],
-                patCheck: 0,
-                queueTime: undefined,
-            },
-        },
-    };
-};
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
@@ -896,7 +845,6 @@ app.listen(3000, function () {
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();
-        temp();
         setDefaultResetTime();
         yield getToken();
         stream_url_params = createStreamParams(streamerIds);
