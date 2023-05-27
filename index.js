@@ -440,6 +440,7 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                 .then(() => null)
                 .catch(() => null);
         }
+        yield sleep(refresh);
     }
 });
 const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -457,9 +458,11 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
             return b[0] - a[0];
         });
         if (sortObj) {
+            winston_1.default.info("uploading sort start: " + sortObj);
             for (const queue of sortObj) {
                 youtubeUpload(queue[1], queue[2]);
                 while (waitUploading) {
+                    winston_1.default.info("waiting uploading " + queue[1] + "_" + queue[2] + " completed");
                     yield sleep(5);
                 }
                 if (new Date().getTime() < resetTime.getTime())
@@ -495,7 +498,7 @@ const recordStream = (id, vidId) => {
     winston_1.default.info(id + " stream recording in session.");
 };
 const mergeVideo = (id, vidId) => {
-    var _a, _b, _c;
+    var _a;
     try {
         winston_1.default.info(id + "_" + vidId + " merge start");
         if (info[id][vidId].fileName.length === 1) {
@@ -521,10 +524,7 @@ const mergeVideo = (id, vidId) => {
                 "copy",
                 root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
             ]); //return code: 3221225786, 130;
-            (_b = (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.stdout) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
-                winston_1.default.info(data);
-            });
-            (_c = info[id][vidId].procs) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
+            (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
                 winston_1.default.info(id + " merge is done. status: " + code);
                 for (const fileName of info[id][vidId].fileName) {
                     fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -710,6 +710,7 @@ const youtubeUpload = (id, vidId) => {
 const enqueue = (id, vidId) => {
     info[id][vidId].status = InfoStatus.QUEUE;
     info[id][vidId].queueTime = new Date().getTime();
+    winston_1.default.info(id + "_" + vidId + " enqueue");
 };
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
     var _e;
@@ -838,37 +839,27 @@ const setDefaultResetTime = () => {
 };
 const temp = () => {
     info = {
-        paka9999: {},
-        dopa24: {
-            "40335101095": {
-                title: "5시 언저리",
-                game: ["Warcraft III", "StarCraft", "League of Legends", "StarCraft"],
-                changeTime: [
-                    1685110858.562, 1685111306.015, 1685115871.087, 1685122048.779,
-                ],
+        paka9999: {
+            "40337860231": {
+                title: "노데스 탑라이너",
+                game: ["League of Legends"],
+                changeTime: [1685177551.163],
                 quality: "1080p60",
-                status: 6,
-                fileName: ["40335101095", "40335101095_1"],
-                pat: {
-                    token: {
-                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"dopa24","channel_id":536083731,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685112058,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
-                        signature: "953033317b18a5fe8c1f9405f11ee361e506a497",
-                        __typename: "PlaybackAccessToken",
-                    },
-                    expire: 1685112058,
-                },
+                status: 0,
+                fileName: [],
                 patCheck: 0,
-                queueTime: 1685120650000,
+                queueTime: undefined,
             },
         },
+        dopa24: {},
         pikra10: {
             "40337443591": {
                 title: "토요일",
-                game: ["Just Chatting", "서버 프로그램 종료"],
-                changeTime: [1685164066.66, 1685173188.174],
+                game: ["Just Chatting", "서버 프로그램 종료", "Just Chatting"],
+                changeTime: [1685164066.66, 1685173188.174, 1685177551.166],
                 quality: "1080p60",
                 status: 4,
-                fileName: ["40337443591"],
+                fileName: ["40337443591", "40337443591_1"],
                 pat: {
                     token: {
                         value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"pikra10","channel_id":194230187,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685165266,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
@@ -881,28 +872,20 @@ const temp = () => {
                 queueTime: undefined,
             },
         },
-        xkwhd: {
-            "40335613015": {
-                title: "9시 발로란트 고수내전",
-                game: ["VALORANT"],
-                changeTime: [1685110858.885],
+        xkwhd: {},
+        aba4647: {},
+        tmxk319: {
+            "40337909591": {
+                title: "노데스 원딜러",
+                game: ["League of Legends"],
+                changeTime: [1685177551.165],
                 quality: "1080p60",
-                status: 6,
-                fileName: ["40335613015"],
-                pat: {
-                    token: {
-                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"xkwhd","channel_id":175163251,"chansub":{"restricted_bitrates":[],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685112058,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
-                        signature: "dcd84f7b351ec0df0090f5e2a551a5215de5ee4d",
-                        __typename: "PlaybackAccessToken",
-                    },
-                    expire: 1685112058,
-                },
+                status: 0,
+                fileName: [],
                 patCheck: 0,
-                queueTime: 1685120640000,
+                queueTime: undefined,
             },
         },
-        aba4647: {},
-        tmxk319: {},
     };
 };
 app.listen(3000, function () {
