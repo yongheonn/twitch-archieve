@@ -956,6 +956,7 @@ app.get("/", function (req, res) {
       "유튜브 업로딩 대기 중",
     ],
     errorCount: errorCount,
+    resetTime: resetTime,
   });
 });
 /*
