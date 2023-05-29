@@ -1217,7 +1217,7 @@ const temp = () => {
         game: ["VALORANT", "서버 프로그램 종료", "VALORANT"],
         changeTime: [1685322091.435, 1685384654.378, 1685384678.681],
         quality: "1080p60",
-        status: 5,
+        status: 4,
         fileName: ["40342447831", "40342447831_1"],
         pat: {
           token: {
