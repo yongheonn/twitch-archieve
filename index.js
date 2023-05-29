@@ -540,8 +540,8 @@ const checkVideoLength = (id, vidId) => __awaiter(void 0, void 0, void 0, functi
     ]); //return code: 3221225786, 130;
     let waitForCrop = true;
     let returnValue = 1;
-    checkProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
-        const length = result === null || result === void 0 ? void 0 : result.toString().split(":");
+    checkProcess.stdout.on("data", (data) => __awaiter(void 0, void 0, void 0, function* () {
+        const length = data === null || data === void 0 ? void 0 : data.toString().split(":");
         if ((length === null || length === void 0 ? void 0 : length.length) === 3) {
             const hour = Number(length[0]);
             const minute = Number(length[1]);

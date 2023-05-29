@@ -663,8 +663,8 @@ const checkVideoLength = async (id: string, vidId: string) => {
   ]); //return code: 3221225786, 130;
   let waitForCrop = true;
   let returnValue = 1;
-  checkProcess.on("exit", async (result) => {
-    const length = result?.toString().split(":");
+  checkProcess.stdout.on("data", async (data) => {
+    const length = data?.toString().split(":");
     if (length?.length === 3) {
       const hour = Number(length[0]);
       const minute = Number(length[1]);
