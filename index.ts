@@ -6,6 +6,7 @@ import fs from "fs";
 import { google } from "googleapis";
 import { Credentials } from "google-auth-library";
 import { start } from "repl";
+import { ffprobe } from "fluent-ffmpeg";
 const youtube = google.youtube("v3");
 
 // Define our constants, you will change these with your own
@@ -533,7 +534,7 @@ const doProcess = async () => {
           }
           if (info[id][vidId]["status"] === InfoStatus.TEMP) {
             const length = await checkVideoLength(id, vidId);
-            //   enqueue(id, vidId, length);
+            // enqueue(id, vidId, length);
           }
           if (offlineStreamers) {
             logger.info(
@@ -648,30 +649,12 @@ const recordStream = (id: string, vidId: string) => {
 };
 
 const checkVideoLength = async (id: string, vidId: string) => {
-  /*const checkProcess = spawn("ffmpeg", [
-    "-i",
+  info[id][vidId].status = InfoStatus.MERGING;
+  ffprobe(
     root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-    "2>&1",
-    "|",
-    "grep",
-    "Duration",
-    "|",
-    "cut",
-    "-d",
-    "'",
-    "'",
-    "-f",
-    "4",
-    "|",
-    "sed",
-    "s/,//",
-  ]); //return code: 3221225786, 130;*/
-  exec(
-    "ffmpeg -i undefined_0_final.ts 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//",
-    function (err, stdout, stderr) {
-      if (err) logger.error("err:\n" + err);
-      if (stderr) logger.info("stderr:\n" + stderr);
-      logger.info("stdout:\n" + stdout);
+    function (err, metadata) {
+      //console.dir(metadata); // all metadata
+      logger.info(metadata.format.duration);
     }
   );
   /*

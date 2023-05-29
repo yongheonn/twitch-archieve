@@ -18,6 +18,7 @@ const winston_1 = __importDefault(require("./winston"));
 const child_process_1 = require("child_process");
 const fs_1 = __importDefault(require("fs"));
 const googleapis_1 = require("googleapis");
+const fluent_ffmpeg_1 = require("fluent-ffmpeg");
 const youtube = googleapis_1.google.youtube("v3");
 // Define our constants, you will change these with your own
 const TWITCH_CLIENT_ID = "6gkwj5guq4a5vjbpd181ksilve9km5";
@@ -432,7 +433,7 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                     }
                     if (info[id][vidId]["status"] === InfoStatus.TEMP) {
                         const length = yield checkVideoLength(id, vidId);
-                        //   enqueue(id, vidId, length);
+                        // enqueue(id, vidId, length);
                     }
                     if (offlineStreamers) {
                         winston_1.default.info(offlineStreamers +
@@ -525,30 +526,10 @@ const recordStream = (id, vidId) => {
     winston_1.default.info(id + " stream recording in session.");
 };
 const checkVideoLength = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
-    /*const checkProcess = spawn("ffmpeg", [
-      "-i",
-      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-      "2>&1",
-      "|",
-      "grep",
-      "Duration",
-      "|",
-      "cut",
-      "-d",
-      "'",
-      "'",
-      "-f",
-      "4",
-      "|",
-      "sed",
-      "s/,//",
-    ]); //return code: 3221225786, 130;*/
-    (0, child_process_1.exec)("ffmpeg -i undefined_0_final.ts 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//", function (err, stdout, stderr) {
-        if (err)
-            winston_1.default.error("err:\n" + err);
-        if (stderr)
-            winston_1.default.info("stderr:\n" + stderr);
-        winston_1.default.info("stdout:\n" + stdout);
+    info[id][vidId].status = InfoStatus.MERGING;
+    (0, fluent_ffmpeg_1.ffprobe)(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err, metadata) {
+        //console.dir(metadata); // all metadata
+        winston_1.default.info(metadata.format.duration);
     });
     /*
     let waitForCrop = true;
