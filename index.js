@@ -535,7 +535,7 @@ const checkVideoLength = (id, vidId) => __awaiter(void 0, void 0, void 0, functi
             const hour = Math.floor(duration / 3600);
             const minute = Math.floor((duration % 3600) / 60);
             const second = Math.floor((duration % 3600) % 60);
-            const quotient = Math.floor(((hour * 3600 + minute * 60 + second) / 11) * 3600);
+            const quotient = Math.floor((hour * 3600 + minute * 60 + second) / (11 * 3600));
             if (quotient >= 1) {
                 winston_1.default.info(id +
                     "_" +
