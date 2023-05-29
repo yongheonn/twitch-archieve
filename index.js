@@ -311,6 +311,8 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                         pat: undefined,
                         patCheck: 0,
                         procs: undefined,
+                        num: 0,
+                        queueNum: 0,
                     };
                     if (!isExceptGame) {
                         isValid = yield checkQuality(stream["user_login"], stream["id"]);
@@ -460,13 +462,33 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
         if (sortObj.length !== 0) {
             winston_1.default.info("uploading sort start: " + sortObj);
             for (const queue of sortObj) {
-                youtubeUpload(queue[1], queue[2]);
-                while (waitUploading) {
-                    winston_1.default.info("waiting uploading " + queue[1] + "_" + queue[2] + " completed");
-                    yield sleep(5);
+                if (info[queue[1]][queue[2]].num === 1) {
+                    youtubeUpload(queue[1], queue[2], -1);
+                    while (waitUploading) {
+                        winston_1.default.info("waiting uploading " + queue[1] + "_" + queue[2] + " completed");
+                        yield sleep(5);
+                    }
+                    if (new Date().getTime() < resetTime.getTime())
+                        return;
                 }
-                if (new Date().getTime() < resetTime.getTime())
-                    return;
+                else {
+                    const startIndex = info[queue[1]][queue[2]].queueNum;
+                    for (let i = startIndex; i < info[queue[1]][queue[2]].num; i++) {
+                        youtubeUpload(queue[1], queue[2], i);
+                        while (waitUploading) {
+                            winston_1.default.info("waiting uploading " +
+                                queue[1] +
+                                "_" +
+                                queue[2] +
+                                "_" +
+                                i +
+                                " completed");
+                            yield sleep(5);
+                        }
+                        if (new Date().getTime() < resetTime.getTime())
+                            return;
+                    }
+                }
             }
         }
     }
@@ -497,14 +519,93 @@ const recordStream = (id, vidId) => {
     }));
     winston_1.default.info(id + " stream recording in session.");
 };
+const checkVideoLength = (id, vidId) => {
+    const checkProcess = (0, child_process_1.spawn)("ffmpeg", [
+        "-i",
+        info[id][vidId].fileName[0] + "_final.ts",
+        "2>&1",
+        "|",
+        "grep",
+        "Duration",
+        "|",
+        "cut",
+        "-d",
+        "'",
+        "'",
+        "-f",
+        "4",
+        "|",
+        "sed",
+        "s/,//",
+    ]); //return code: 3221225786, 130;
+    checkProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
+        const length = result === null || result === void 0 ? void 0 : result.toString().split(":");
+        if ((length === null || length === void 0 ? void 0 : length.length) === 3) {
+            const hour = Number(length[0]);
+            const minute = Number(length[1]);
+            const second = parseFloat(length[2]);
+            const quotient = Math.floor(((hour * 3600 + minute * 60 + second) / 11) * 3600);
+            if (quotient >= 1) {
+                cropVideo(id, vidId, quotient, length);
+                return quotient + 1;
+            }
+        }
+    }));
+    return 1;
+};
+const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, void 0, function* () {
+    let waitForCrop = true;
+    for (let i = 0; i < quotient; i++) {
+        const cropProcess = (0, child_process_1.spawn)("ffmpeg", [
+            "-i",
+            info[id][vidId].fileName[0] + "_final.ts",
+            "-ss",
+            (i * 11).toString() + ":00:00",
+            "to",
+            ((i + 1) * 11).toString() + ":00:00",
+            "-vcodec",
+            "copy",
+            "-acodec",
+            "copy",
+            info[id][vidId].fileName[0] + "_final_" + i.toString() + ".ts",
+        ]);
+        cropProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
+            waitForCrop = false;
+        }));
+        while (waitForCrop) {
+            yield sleep(5);
+        }
+        waitForCrop = true;
+    }
+    const cropProcess = (0, child_process_1.spawn)("ffmpeg", [
+        "-i",
+        info[id][vidId].fileName[0] + "_final.ts",
+        "-ss",
+        (quotient * 11).toString() + ":00:00",
+        "to",
+        length[0] + ":" + length[1] + ":" + length[2],
+        "-vcodec",
+        "copy",
+        "-acodec",
+        "copy",
+        info[id][vidId].fileName[0] + "_final_" + quotient.toString() + ".ts",
+    ]);
+    cropProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
+        waitForCrop = false;
+    }));
+    while (waitForCrop) {
+        yield sleep(5);
+    }
+});
 const mergeVideo = (id, vidId) => {
     var _a;
     try {
         winston_1.default.info(id + "_" + vidId + " merge start");
         if (info[id][vidId].fileName.length === 1) {
             fs_1.default.renameSync(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
+            const length = checkVideoLength(id, vidId);
             winston_1.default.info(id + "_" + vidId + " rename done");
-            enqueue(id, vidId);
+            enqueue(id, vidId, length);
         }
         else if (info[id][vidId].fileName.length > 1) {
             const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -548,7 +649,8 @@ const mergeVideo = (id, vidId) => {
                         " is deleted.");
                 });
                 delete info[id][vidId].procs;
-                enqueue(id, vidId);
+                const length = checkVideoLength(id, vidId);
+                enqueue(id, vidId, length);
             }));
         }
     }
@@ -557,7 +659,7 @@ const mergeVideo = (id, vidId) => {
         errorCount++;
     }
 };
-const youtubeUpload = (id, vidId) => {
+const youtubeUpload = (id, vidId, num) => {
     waitUploading = true;
     const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
     const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
@@ -565,7 +667,12 @@ const youtubeUpload = (id, vidId) => {
     // 3. UTC to KST (UTC + 9시간)
     const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
     const kr_curr = new Date(utc + KR_TIME_DIFF);
-    const title = id + " " + kr_curr.toLocaleString() + " " + info[id][vidId]["title"];
+    const title = id +
+        " " +
+        kr_curr.toLocaleString() +
+        " " +
+        info[id][vidId]["title"] +
+        (num === -1 ? "" : "_" + num);
     const exceptGameIndex = [];
     let fromIndex = 0;
     for (const exceptGame of exceptGames) {
@@ -577,31 +684,11 @@ const youtubeUpload = (id, vidId) => {
             fromIndex++;
         }
     }
-    let description = "00:00:00 ";
-    let startAt = 0;
-    let endAt = 0;
-    if (info[id][vidId]["game"].length === 1) {
-        description += "~ final " + info[id][vidId].game[0] + "\n";
-    }
-    else {
-        endAt = info[id][vidId]["changeTime"][1] - info[id][vidId]["changeTime"][0];
-        if (exceptGameIndex[0] === 0)
-            endAt = 0;
-        const hour = Math.floor(endAt / 3600);
-        const minute = Math.floor((endAt % 3600) / 60);
-        const seconds = Math.floor((endAt % 3600) % 60);
-        description +=
-            "~ " +
-                String(hour).padStart(2, "0") +
-                ":" +
-                String(minute).padStart(2, "0") +
-                ":" +
-                String(seconds).padStart(2, "0") +
-                " " +
-                info[id][vidId].game[0] +
-                "\n";
-    }
-    for (let i = 1; i < info[id][vidId]["game"].length - 1; i++) {
+    let description = "";
+    let startAt = num === -1 ? 0 : 11 * num * 3600;
+    let endAt = num === -1 ? 0 : 11 * num * 3600;
+    let checkTime = 0;
+    for (let i = 0; i < info[id][vidId]["game"].length - 1; i++) {
         startAt = endAt;
         let isExceptTime = false;
         for (const index of exceptGameIndex) {
@@ -609,13 +696,22 @@ const youtubeUpload = (id, vidId) => {
                 isExceptTime = true;
             }
         }
-        if (!isExceptTime)
+        if (!isExceptTime) {
+            checkTime +=
+                info[id][vidId]["changeTime"][i + 1] - info[id][vidId]["changeTime"][i];
+            if (checkTime < startAt) {
+                continue;
+            }
             endAt +=
                 info[id][vidId]["changeTime"][i + 1] - info[id][vidId]["changeTime"][i];
-        const startHour = Math.floor(startAt / 3600);
+        }
+        if (checkTime < startAt) {
+            continue;
+        }
+        const startHour = Math.floor(startAt / 3600) - (num === -1 ? 0 : 11 * num * 3600);
         const startMinute = Math.floor((startAt % 3600) / 60);
         const startSeconds = Math.floor((startAt % 3600) % 60);
-        const endHour = Math.floor(endAt / 3600);
+        const endHour = Math.floor(endAt / 3600) - (num === -1 ? 0 : 11 * num * 3600);
         const endMinute = Math.floor((endAt % 3600) / 60);
         const endSeconds = Math.floor((endAt % 3600) % 60);
         description +=
@@ -634,22 +730,32 @@ const youtubeUpload = (id, vidId) => {
                 info[id][vidId]["game"][i] +
                 "\n";
     }
-    if (info[id][vidId]["game"].length > 1) {
-        const hour = Math.floor(endAt / 3600);
-        const minute = Math.floor((endAt % 3600) / 60);
-        const seconds = Math.floor((endAt % 3600) % 60);
-        description +=
-            String(hour).padStart(2, "0") +
-                ":" +
-                String(minute).padStart(2, "0") +
-                ":" +
-                String(seconds).padStart(2, "0") +
-                " ~ final " +
-                info[id][vidId].game.at(-1);
-    }
+    const hour = Math.floor(endAt / 3600) - (num === -1 ? 0 : 11 * num * 3600);
+    const minute = Math.floor((endAt % 3600) / 60);
+    const seconds = Math.floor((endAt % 3600) % 60);
+    description +=
+        String(hour).padStart(2, "0") +
+            ":" +
+            String(minute).padStart(2, "0") +
+            ":" +
+            String(seconds).padStart(2, "0") +
+            " ~ final " +
+            info[id][vidId].game.at(-1);
     winston_1.default.info(id + "_" + vidId + " readStream start");
-    const media = fs_1.default.createReadStream(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
-    winston_1.default.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
+    const media = fs_1.default.createReadStream(root_path +
+        id +
+        "/" +
+        info[id][vidId].fileName[0] +
+        "_final" +
+        (num === -1 ? "" : "_" + num) +
+        ".ts");
+    winston_1.default.info(root_path +
+        id +
+        "/" +
+        info[id][vidId].fileName[0] +
+        "_final" +
+        (num === -1 ? "" : "_" + num) +
+        ".ts");
     const oauth2Client = new googleapis_1.google.auth.OAuth2("1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com", "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", "http://localhost:3000/redirect");
     oauth2Client.credentials = {
         access_token: "ya29.a0AWY7Cknyh54tEVh_HYSdktHT5KRGjK01nrWJebzQAz5ZtoFZ__YELhVKRHslsyNsWjKCx6ylKOec08A17BYF9MugZyHijHGTfQlF2y3DOfpQHFMlWhcF7DvBTHEqAIRusZM0t80nGsKjLtuskGlRlf7fHycJaCgYKAdASARISFQG1tDrprCZKj9Q74vA1ABcfHI1cHA0163",
@@ -690,26 +796,37 @@ const youtubeUpload = (id, vidId) => {
             }
         }
         else {
+            info[id][vidId].queueNum++;
             winston_1.default.info("response: " + JSON.stringify(data));
-            fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
+            fs_1.default.unlink(root_path +
+                id +
+                "/" +
+                info[id][vidId].fileName[0] +
+                "_final" +
+                (num === -1 ? "" : "_" + num) +
+                ".ts", (err) => {
                 if (err)
                     throw err;
                 winston_1.default.info(root_path +
                     id +
                     "/" +
                     info[id][vidId].fileName[0] +
-                    "_final.ts" +
+                    "_final" +
+                    (num === -1 ? "" : "_" + num) +
+                    ".ts" +
                     " is deleted.");
-                delete info[id][vidId];
+                if (info[id][vidId].num - 1 === num || num === -1)
+                    delete info[id][vidId];
             });
         }
         waitUploading = false;
     });
     winston_1.default.info("uploading ");
 };
-const enqueue = (id, vidId) => {
+const enqueue = (id, vidId, length) => {
     info[id][vidId].status = InfoStatus.QUEUE;
     info[id][vidId].queueTime = new Date().getTime();
+    info[id][vidId].num = length;
     winston_1.default.info(id + "_" + vidId + " enqueue");
 };
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
@@ -746,7 +863,7 @@ process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 process.once("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
     var _f;
-    console.log("You've pressed Ctrl + C on this process.");
+    winston_1.default.info("You've pressed Ctrl + C on this process.");
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
@@ -841,7 +958,6 @@ const setDefaultResetTime = () => {
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
-        console.log(new Date(2023, 4, 27, 2, 4).getTime());
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();

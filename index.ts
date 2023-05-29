@@ -5,6 +5,7 @@ import { ChildProcess, spawn } from "child_process";
 import fs from "fs";
 import { google } from "googleapis";
 import { Credentials } from "google-auth-library";
+import { start } from "repl";
 const youtube = google.youtube("v3");
 
 // Define our constants, you will change these with your own
@@ -62,6 +63,8 @@ interface InfoType {
   pat?: PatType;
   patCheck: number;
   procs?: ChildProcess;
+  num: number;
+  queueNum: number;
 }
 
 const InfoStatus = {
@@ -365,6 +368,8 @@ const checkLive = async () => {
             pat: undefined,
             patCheck: 0,
             procs: undefined,
+            num: 0,
+            queueNum: 0,
           };
           if (!isExceptGame) {
             isValid = await checkQuality(stream["user_login"], stream["id"]);
@@ -561,14 +566,39 @@ const processYoutubeQueue = async () => {
     if (sortObj.length !== 0) {
       logger.info("uploading sort start: " + sortObj);
       for (const queue of sortObj) {
-        youtubeUpload(queue[1] as string, queue[2] as string);
-        while (waitUploading) {
-          logger.info(
-            "waiting uploading " + queue[1] + "_" + queue[2] + " completed"
-          );
-          await sleep(5);
+        if (info[queue[1] as string][queue[2] as string].num === 1) {
+          youtubeUpload(queue[1] as string, queue[2] as string, -1);
+          while (waitUploading) {
+            logger.info(
+              "waiting uploading " + queue[1] + "_" + queue[2] + " completed"
+            );
+            await sleep(5);
+          }
+          if (new Date().getTime() < resetTime.getTime()) return;
+        } else {
+          const startIndex =
+            info[queue[1] as string][queue[2] as string].queueNum;
+          for (
+            let i = startIndex;
+            i < info[queue[1] as string][queue[2] as string].num;
+            i++
+          ) {
+            youtubeUpload(queue[1] as string, queue[2] as string, i);
+            while (waitUploading) {
+              logger.info(
+                "waiting uploading " +
+                  queue[1] +
+                  "_" +
+                  queue[2] +
+                  "_" +
+                  i +
+                  " completed"
+              );
+              await sleep(5);
+            }
+            if (new Date().getTime() < resetTime.getTime()) return;
+          }
         }
-        if (new Date().getTime() < resetTime.getTime()) return;
       }
     }
   }
@@ -612,6 +642,96 @@ const recordStream = (id: string, vidId: string) => {
   logger.info(id + " stream recording in session.");
 };
 
+const checkVideoLength = (id: string, vidId: string) => {
+  const checkProcess = spawn("ffmpeg", [
+    "-i",
+    info[id][vidId].fileName[0] + "_final.ts",
+    "2>&1",
+    "|",
+    "grep",
+    "Duration",
+    "|",
+    "cut",
+    "-d",
+    "'",
+    "'",
+    "-f",
+    "4",
+    "|",
+    "sed",
+    "s/,//",
+  ]); //return code: 3221225786, 130;
+
+  checkProcess.on("exit", async (result) => {
+    const length = result?.toString().split(":");
+    if (length?.length === 3) {
+      const hour = Number(length[0]);
+      const minute = Number(length[1]);
+      const second = parseFloat(length[2]);
+      const quotient = Math.floor(
+        ((hour * 3600 + minute * 60 + second) / 11) * 3600
+      );
+
+      if (quotient >= 1) {
+        cropVideo(id, vidId, quotient, length);
+        return quotient + 1;
+      }
+    }
+  });
+  return 1;
+};
+
+const cropVideo = async (
+  id: string,
+  vidId: string,
+  quotient: number,
+  length: string[]
+) => {
+  let waitForCrop = true;
+  for (let i = 0; i < quotient; i++) {
+    const cropProcess = spawn("ffmpeg", [
+      "-i",
+      info[id][vidId].fileName[0] + "_final.ts",
+      "-ss",
+      (i * 11).toString() + ":00:00",
+      "to",
+      ((i + 1) * 11).toString() + ":00:00",
+      "-vcodec",
+      "copy",
+      "-acodec",
+      "copy",
+      info[id][vidId].fileName[0] + "_final_" + i.toString() + ".ts",
+    ]);
+    cropProcess.on("exit", async (result) => {
+      waitForCrop = false;
+    });
+    while (waitForCrop) {
+      await sleep(5);
+    }
+    waitForCrop = true;
+  }
+  const cropProcess = spawn("ffmpeg", [
+    "-i",
+    info[id][vidId].fileName[0] + "_final.ts",
+    "-ss",
+    (quotient * 11).toString() + ":00:00",
+    "to",
+    length[0] + ":" + length[1] + ":" + length[2],
+    "-vcodec",
+    "copy",
+    "-acodec",
+    "copy",
+    info[id][vidId].fileName[0] + "_final_" + quotient.toString() + ".ts",
+  ]);
+
+  cropProcess.on("exit", async (result) => {
+    waitForCrop = false;
+  });
+  while (waitForCrop) {
+    await sleep(5);
+  }
+};
+
 const mergeVideo = (id: string, vidId: string) => {
   try {
     logger.info(id + "_" + vidId + " merge start");
@@ -620,9 +740,9 @@ const mergeVideo = (id: string, vidId: string) => {
         root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
       );
-
+      const length = checkVideoLength(id, vidId);
       logger.info(id + "_" + vidId + " rename done");
-      enqueue(id, vidId);
+      enqueue(id, vidId, length);
     } else if (info[id][vidId].fileName.length > 1) {
       const inputFile =
         root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -676,7 +796,8 @@ const mergeVideo = (id: string, vidId: string) => {
           }
         );
         delete info[id][vidId].procs;
-        enqueue(id, vidId);
+        const length = checkVideoLength(id, vidId);
+        enqueue(id, vidId, length);
       });
     }
   } catch (e) {
@@ -685,7 +806,7 @@ const mergeVideo = (id: string, vidId: string) => {
   }
 };
 
-const youtubeUpload = (id: string, vidId: string) => {
+const youtubeUpload = (id: string, vidId: string, num: number) => {
   waitUploading = true;
   const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
   const utc = recordAt.getTime() + recordAt.getTimezoneOffset() * 60 * 1000;
@@ -695,7 +816,12 @@ const youtubeUpload = (id: string, vidId: string) => {
   const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
   const kr_curr = new Date(utc + KR_TIME_DIFF);
   const title =
-    id + " " + kr_curr.toLocaleString() + " " + info[id][vidId]["title"];
+    id +
+    " " +
+    kr_curr.toLocaleString() +
+    " " +
+    info[id][vidId]["title"] +
+    (num === -1 ? "" : "_" + num);
   const exceptGameIndex = [];
   let fromIndex = 0;
   for (const exceptGame of exceptGames) {
@@ -707,32 +833,12 @@ const youtubeUpload = (id: string, vidId: string) => {
     }
   }
 
-  let description = "00:00:00 ";
+  let description = "";
 
-  let startAt = 0;
-  let endAt = 0;
-
-  if (info[id][vidId]["game"].length === 1) {
-    description += "~ final " + info[id][vidId].game[0] + "\n";
-  } else {
-    endAt = info[id][vidId]["changeTime"][1] - info[id][vidId]["changeTime"][0];
-    if (exceptGameIndex[0] === 0) endAt = 0;
-    const hour = Math.floor(endAt / 3600);
-    const minute = Math.floor((endAt % 3600) / 60);
-    const seconds = Math.floor((endAt % 3600) % 60);
-    description +=
-      "~ " +
-      String(hour).padStart(2, "0") +
-      ":" +
-      String(minute).padStart(2, "0") +
-      ":" +
-      String(seconds).padStart(2, "0") +
-      " " +
-      info[id][vidId].game[0] +
-      "\n";
-  }
-
-  for (let i = 1; i < info[id][vidId]["game"].length - 1; i++) {
+  let startAt = num === -1 ? 0 : 11 * num * 3600;
+  let endAt = num === -1 ? 0 : 11 * num * 3600;
+  let checkTime = 0;
+  for (let i = 0; i < info[id][vidId]["game"].length - 1; i++) {
     startAt = endAt;
     let isExceptTime = false;
 
@@ -741,14 +847,24 @@ const youtubeUpload = (id: string, vidId: string) => {
         isExceptTime = true;
       }
     }
-    if (!isExceptTime)
+    if (!isExceptTime) {
+      checkTime +=
+        info[id][vidId]["changeTime"][i + 1] - info[id][vidId]["changeTime"][i];
+      if (checkTime < startAt) {
+        continue;
+      }
       endAt +=
         info[id][vidId]["changeTime"][i + 1] - info[id][vidId]["changeTime"][i];
-
-    const startHour = Math.floor(startAt / 3600);
+    }
+    if (checkTime < startAt) {
+      continue;
+    }
+    const startHour =
+      Math.floor(startAt / 3600) - (num === -1 ? 0 : 11 * num * 3600);
     const startMinute = Math.floor((startAt % 3600) / 60);
     const startSeconds = Math.floor((startAt % 3600) % 60);
-    const endHour = Math.floor(endAt / 3600);
+    const endHour =
+      Math.floor(endAt / 3600) - (num === -1 ? 0 : 11 * num * 3600);
     const endMinute = Math.floor((endAt % 3600) / 60);
     const endSeconds = Math.floor((endAt % 3600) % 60);
 
@@ -768,24 +884,38 @@ const youtubeUpload = (id: string, vidId: string) => {
       info[id][vidId]["game"][i] +
       "\n";
   }
-  if (info[id][vidId]["game"].length > 1) {
-    const hour = Math.floor(endAt / 3600);
-    const minute = Math.floor((endAt % 3600) / 60);
-    const seconds = Math.floor((endAt % 3600) % 60);
-    description +=
-      String(hour).padStart(2, "0") +
-      ":" +
-      String(minute).padStart(2, "0") +
-      ":" +
-      String(seconds).padStart(2, "0") +
-      " ~ final " +
-      info[id][vidId].game.at(-1);
-  }
+  const hour = Math.floor(endAt / 3600) - (num === -1 ? 0 : 11 * num * 3600);
+  const minute = Math.floor((endAt % 3600) / 60);
+  const seconds = Math.floor((endAt % 3600) % 60);
+  description +=
+    String(hour).padStart(2, "0") +
+    ":" +
+    String(minute).padStart(2, "0") +
+    ":" +
+    String(seconds).padStart(2, "0") +
+    " ~ final " +
+    info[id][vidId].game.at(-1);
+
   logger.info(id + "_" + vidId + " readStream start");
   const media = fs.createReadStream(
-    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
+    root_path +
+      id +
+      "/" +
+      info[id][vidId].fileName[0] +
+      "_final" +
+      (num === -1 ? "" : "_" + num) +
+      ".ts"
   );
-  logger.info(root_path + id + "/" + info[id][vidId].fileName[0] + "_fianl.ts");
+
+  logger.info(
+    root_path +
+      id +
+      "/" +
+      info[id][vidId].fileName[0] +
+      "_final" +
+      (num === -1 ? "" : "_" + num) +
+      ".ts"
+  );
 
   const oauth2Client = new google.auth.OAuth2(
     "1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com",
@@ -846,9 +976,16 @@ const youtubeUpload = (id: string, vidId: string) => {
         );
       }
     } else {
+      info[id][vidId].queueNum++;
       logger.info("response: " + JSON.stringify(data));
       fs.unlink(
-        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+        root_path +
+          id +
+          "/" +
+          info[id][vidId].fileName[0] +
+          "_final" +
+          (num === -1 ? "" : "_" + num) +
+          ".ts",
         (err) => {
           if (err) throw err;
 
@@ -857,10 +994,13 @@ const youtubeUpload = (id: string, vidId: string) => {
               id +
               "/" +
               info[id][vidId].fileName[0] +
-              "_final.ts" +
+              "_final" +
+              (num === -1 ? "" : "_" + num) +
+              ".ts" +
               " is deleted."
           );
-          delete info[id][vidId];
+          if (info[id][vidId].num - 1 === num || num === -1)
+            delete info[id][vidId];
         }
       );
     }
@@ -870,9 +1010,10 @@ const youtubeUpload = (id: string, vidId: string) => {
   logger.info("uploading ");
 };
 
-const enqueue = (id: string, vidId: string) => {
+const enqueue = (id: string, vidId: string, length: number) => {
   info[id][vidId].status = InfoStatus.QUEUE;
   info[id][vidId].queueTime = new Date().getTime();
+  info[id][vidId].num = length;
   logger.info(id + "_" + vidId + " enqueue");
 };
 
@@ -912,7 +1053,7 @@ process.on("exit", async (code) => {
 });
 
 process.once("SIGINT", async () => {
-  console.log("You've pressed Ctrl + C on this process.");
+  logger.info("You've pressed Ctrl + C on this process.");
   for (const id in info) {
     for (const vidId in info[id]) {
       if (info[id][vidId].status === InfoStatus.RECORDING) {
@@ -1035,7 +1176,6 @@ const setDefaultResetTime = () => {
 
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
-  console.log(new Date(2023, 4, 27, 2, 4).getTime());
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
   setDefaultResetTime();
