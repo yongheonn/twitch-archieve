@@ -61,6 +61,7 @@ const InfoStatus = {
     WAITING: 4,
     MERGING: 5,
     QUEUE: 6,
+    TEMP: 7,
 };
 Object.freeze(InfoStatus);
 // Initialize Express and middlewares
@@ -429,6 +430,10 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                     if (info[id][vidId]["status"] === InfoStatus.READY) {
                         recordStream(id, vidId);
                     }
+                    if (info[id][vidId]["status"] === InfoStatus.TEMP) {
+                        const length = yield checkVideoLength(id, vidId);
+                        enqueue(id, vidId, length);
+                    }
                     if (offlineStreamers) {
                         winston_1.default.info(offlineStreamers +
                             "is offline. Check again in " +
@@ -540,7 +545,8 @@ const checkVideoLength = (id, vidId) => __awaiter(void 0, void 0, void 0, functi
     ]); //return code: 3221225786, 130;
     let waitForCrop = true;
     let returnValue = 1;
-    checkProcess.stdout.on("data", (data) => __awaiter(void 0, void 0, void 0, function* () {
+    checkProcess.stderr.on("data", (data) => __awaiter(void 0, void 0, void 0, function* () {
+        winston_1.default.info("check length: " + data);
         const length = data === null || data === void 0 ? void 0 : data.toString().split(":");
         if ((length === null || length === void 0 ? void 0 : length.length) === 3) {
             const hour = Number(length[0]);
@@ -918,6 +924,7 @@ app.get("/", function (req, res) {
             "대기 중",
             "동영상 처리 중",
             "유튜브 업로딩 대기 중",
+            "임시 상태",
         ],
         errorCount: errorCount,
         resetTime: resetTime,
@@ -990,7 +997,7 @@ const temp = () => {
                     1685387141.84,
                 ],
                 quality: "1080p60",
-                status: 4,
+                status: 7,
                 fileName: ["undefined_0", "undefined_0_1"],
                 patCheck: 0,
                 queueTime: undefined,
