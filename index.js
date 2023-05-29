@@ -371,7 +371,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                     if (!vidIdList.includes(vidId)) {
                         if (isWaiting) {
                             info[streamerId][vidId] = Object.assign(Object.assign({}, info[streamerId][vidId]), { status: InfoStatus.MERGING });
-                            mergeVideo(streamerId, vidId);
+                            yield mergeVideo(streamerId, vidId);
                         }
                         else if (isDefault || isReady) {
                             delete info[streamerId][vidId];
@@ -514,12 +514,12 @@ const recordStream = (id, vidId) => {
             delete info[id][vidId]["procs"];
             delete info[id][vidId].procs;
             info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.MERGING });
-            mergeVideo(id, vidId);
+            yield mergeVideo(id, vidId);
         }
     }));
     winston_1.default.info(id + " stream recording in session.");
 };
-const checkVideoLength = (id, vidId) => {
+const checkVideoLength = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
     const checkProcess = (0, child_process_1.spawn)("ffmpeg", [
         "-i",
         info[id][vidId].fileName[0] + "_final.ts",
@@ -538,6 +538,8 @@ const checkVideoLength = (id, vidId) => {
         "sed",
         "s/,//",
     ]); //return code: 3221225786, 130;
+    let waitForCrop = true;
+    let returnValue = 1;
     checkProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
         const length = result === null || result === void 0 ? void 0 : result.toString().split(":");
         if ((length === null || length === void 0 ? void 0 : length.length) === 3) {
@@ -547,12 +549,16 @@ const checkVideoLength = (id, vidId) => {
             const quotient = Math.floor(((hour * 3600 + minute * 60 + second) / 11) * 3600);
             if (quotient >= 1) {
                 cropVideo(id, vidId, quotient, length);
-                return quotient + 1;
+                returnValue = quotient + 1;
             }
         }
+        waitForCrop = false;
     }));
-    return 1;
-};
+    while (waitForCrop) {
+        yield sleep(5);
+    }
+    return returnValue;
+});
 const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, void 0, function* () {
     let waitForCrop = true;
     for (let i = 0; i < quotient; i++) {
@@ -591,19 +597,29 @@ const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, voi
         info[id][vidId].fileName[0] + "_final_" + quotient.toString() + ".ts",
     ]);
     cropProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
-        waitForCrop = false;
+        fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
+            if (err)
+                throw err;
+            winston_1.default.info(root_path +
+                id +
+                "/" +
+                info[id][vidId].fileName[0] +
+                "_final.ts" +
+                " is deleted.");
+            waitForCrop = false;
+        });
     }));
     while (waitForCrop) {
         yield sleep(5);
     }
 });
-const mergeVideo = (id, vidId) => {
-    var _a;
+const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e;
     try {
         winston_1.default.info(id + "_" + vidId + " merge start");
         if (info[id][vidId].fileName.length === 1) {
             fs_1.default.renameSync(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
-            const length = checkVideoLength(id, vidId);
+            const length = yield checkVideoLength(id, vidId);
             winston_1.default.info(id + "_" + vidId + " rename done");
             enqueue(id, vidId, length);
         }
@@ -625,7 +641,7 @@ const mergeVideo = (id, vidId) => {
                 "copy",
                 root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
             ]); //return code: 3221225786, 130;
-            (_a = info[id][vidId].procs) === null || _a === void 0 ? void 0 : _a.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
+            (_e = info[id][vidId].procs) === null || _e === void 0 ? void 0 : _e.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
                 winston_1.default.info(id + " merge is done. status: " + code);
                 for (const fileName of info[id][vidId].fileName) {
                     fs_1.default.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -649,7 +665,7 @@ const mergeVideo = (id, vidId) => {
                         " is deleted.");
                 });
                 delete info[id][vidId].procs;
-                const length = checkVideoLength(id, vidId);
+                const length = yield checkVideoLength(id, vidId);
                 enqueue(id, vidId, length);
             }));
         }
@@ -658,7 +674,7 @@ const mergeVideo = (id, vidId) => {
         winston_1.default.error(e);
         errorCount++;
     }
-};
+});
 const youtubeUpload = (id, vidId, num) => {
     waitUploading = true;
     const recordAt = new Date(info[id][vidId]["changeTime"][0] * 1000);
@@ -830,13 +846,13 @@ const enqueue = (id, vidId, length) => {
     winston_1.default.info(id + "_" + vidId + " enqueue");
 };
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
+    var _f;
     winston_1.default.info(`exit code : ${code}`);
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
                 info[id][vidId].status = InfoStatus.WAITING;
-                (_e = info[id][vidId].procs) === null || _e === void 0 ? void 0 : _e.kill(2);
+                (_f = info[id][vidId].procs) === null || _f === void 0 ? void 0 : _f.kill(2);
                 delete info[id][vidId].procs;
                 info[id][vidId]["game"].push("서버 프로그램 종료");
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
@@ -862,13 +878,13 @@ process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 process.once("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
-    var _f;
+    var _g;
     winston_1.default.info("You've pressed Ctrl + C on this process.");
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
                 info[id][vidId].status = InfoStatus.WAITING;
-                (_f = info[id][vidId].procs) === null || _f === void 0 ? void 0 : _f.kill(2);
+                (_g = info[id][vidId].procs) === null || _g === void 0 ? void 0 : _g.kill(2);
                 delete info[id][vidId].procs;
                 info[id][vidId]["game"].push("서버 프로그램 종료");
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);

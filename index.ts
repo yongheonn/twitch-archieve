@@ -469,7 +469,7 @@ const checkLive = async () => {
                 ...info[streamerId][vidId],
                 status: InfoStatus.MERGING,
               };
-              mergeVideo(streamerId, vidId);
+              await mergeVideo(streamerId, vidId);
             } else if (isDefault || isReady) {
               delete info[streamerId][vidId];
             }
@@ -635,14 +635,14 @@ const recordStream = (id: string, vidId: string) => {
         ...info[id][vidId],
         status: InfoStatus.MERGING,
       };
-      mergeVideo(id, vidId);
+      await mergeVideo(id, vidId);
     }
   });
 
   logger.info(id + " stream recording in session.");
 };
 
-const checkVideoLength = (id: string, vidId: string) => {
+const checkVideoLength = async (id: string, vidId: string) => {
   const checkProcess = spawn("ffmpeg", [
     "-i",
     info[id][vidId].fileName[0] + "_final.ts",
@@ -661,7 +661,8 @@ const checkVideoLength = (id: string, vidId: string) => {
     "sed",
     "s/,//",
   ]); //return code: 3221225786, 130;
-
+  let waitForCrop = true;
+  let returnValue = 1;
   checkProcess.on("exit", async (result) => {
     const length = result?.toString().split(":");
     if (length?.length === 3) {
@@ -674,11 +675,16 @@ const checkVideoLength = (id: string, vidId: string) => {
 
       if (quotient >= 1) {
         cropVideo(id, vidId, quotient, length);
-        return quotient + 1;
+        returnValue = quotient + 1;
       }
     }
+    waitForCrop = false;
   });
-  return 1;
+
+  while (waitForCrop) {
+    await sleep(5);
+  }
+  return returnValue;
 };
 
 const cropVideo = async (
@@ -725,14 +731,29 @@ const cropVideo = async (
   ]);
 
   cropProcess.on("exit", async (result) => {
-    waitForCrop = false;
+    fs.unlink(
+      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
+      (err) => {
+        if (err) throw err;
+
+        logger.info(
+          root_path +
+            id +
+            "/" +
+            info[id][vidId].fileName[0] +
+            "_final.ts" +
+            " is deleted."
+        );
+        waitForCrop = false;
+      }
+    );
   });
   while (waitForCrop) {
     await sleep(5);
   }
 };
 
-const mergeVideo = (id: string, vidId: string) => {
+const mergeVideo = async (id: string, vidId: string) => {
   try {
     logger.info(id + "_" + vidId + " merge start");
     if (info[id][vidId].fileName.length === 1) {
@@ -740,7 +761,7 @@ const mergeVideo = (id: string, vidId: string) => {
         root_path + id + "/" + info[id][vidId].fileName[0] + ".ts",
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts"
       );
-      const length = checkVideoLength(id, vidId);
+      const length = await checkVideoLength(id, vidId);
       logger.info(id + "_" + vidId + " rename done");
       enqueue(id, vidId, length);
     } else if (info[id][vidId].fileName.length > 1) {
@@ -796,7 +817,7 @@ const mergeVideo = (id: string, vidId: string) => {
           }
         );
         delete info[id][vidId].procs;
-        const length = checkVideoLength(id, vidId);
+        const length = await checkVideoLength(id, vidId);
         enqueue(id, vidId, length);
       });
     }
