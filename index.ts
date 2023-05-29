@@ -783,7 +783,9 @@ const mergeVideo = async (id: string, vidId: string) => {
         "copy",
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       ]); //return code: 3221225786, 130;
-
+      concatProcess.stderr.on("data", async (data) => {
+        logger.info("ffmpeg: " + data);
+      });
       concatProcess.on("exit", async (code) => {
         logger.info(id + " merge is done. status: " + code);
         for (const fileName of info[id][vidId].fileName) {

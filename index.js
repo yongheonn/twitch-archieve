@@ -640,6 +640,9 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                 "copy",
                 root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
             ]); //return code: 3221225786, 130;
+            concatProcess.stderr.on("data", (data) => __awaiter(void 0, void 0, void 0, function* () {
+                winston_1.default.info("ffmpeg: " + data);
+            }));
             concatProcess.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
                 winston_1.default.info(id + " merge is done. status: " + code);
                 for (const fileName of info[id][vidId].fileName) {
