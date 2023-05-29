@@ -432,8 +432,9 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                         recordStream(id, vidId);
                     }
                     if (info[id][vidId]["status"] === InfoStatus.TEMP) {
+                        info[id][vidId]["status"] = InfoStatus.MERGING;
                         const length = yield checkVideoLength(id, vidId);
-                        // enqueue(id, vidId, length);
+                        enqueue(id, vidId, length);
                     }
                     if (offlineStreamers) {
                         winston_1.default.info(offlineStreamers +
@@ -526,40 +527,37 @@ const recordStream = (id, vidId) => {
     winston_1.default.info(id + " stream recording in session.");
 };
 const checkVideoLength = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
-    info[id][vidId].status = InfoStatus.MERGING;
-    (0, fluent_ffmpeg_1.ffprobe)(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err, metadata) {
-        //console.dir(metadata); // all metadata
-        winston_1.default.info(metadata.format.duration);
-    });
-    /*
     let waitForCrop = true;
     let returnValue = 1;
-    checkProcess.stderr.on("data", async (data) => {
-      logger.info("check length: " + data);
-      const length = data?.toString().split(":");
-      if (length?.length === 3) {
-        const hour = Number(length[0]);
-        const minute = Number(length[1]);
-        const second = parseFloat(length[2]);
-        const quotient = Math.floor(
-          ((hour * 3600 + minute * 60 + second) / 11) * 3600
-        );
-  
-        if (quotient >= 1) {
-          cropVideo(id, vidId, quotient, length);
-          returnValue = quotient + 1;
+    (0, fluent_ffmpeg_1.ffprobe)(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", function (err, metadata) {
+        const duration = metadata.format.duration;
+        if (duration) {
+            const hour = Math.floor(duration / 3600);
+            const minute = Math.floor((duration % 3600) / 60);
+            const second = Math.floor((duration % 3600) % 60);
+            const quotient = Math.floor(((hour * 3600 + minute * 60 + second) / 11) * 3600);
+            if (quotient >= 1) {
+                winston_1.default.info(id +
+                    "_" +
+                    vidId +
+                    " duration: " +
+                    hour +
+                    ":" +
+                    minute +
+                    ":" +
+                    second);
+                cropVideo(id, vidId, quotient, hour + ":" + minute + ":" + second);
+                returnValue = quotient + 1;
+            }
         }
-      }
-      waitForCrop = false;
+        waitForCrop = false;
     });
-  
     while (waitForCrop) {
-      await sleep(5);
+        yield sleep(5);
     }
     return returnValue;
-    */
 });
-const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, void 0, function* () {
+const cropVideo = (id, vidId, quotient, duration) => __awaiter(void 0, void 0, void 0, function* () {
     let waitForCrop = true;
     for (let i = 0; i < quotient; i++) {
         const cropProcess = (0, child_process_1.spawn)("ffmpeg", [
@@ -595,7 +593,7 @@ const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, voi
         "-ss",
         (quotient * 11).toString() + ":00:00",
         "to",
-        length[0] + ":" + length[1] + ":" + length[2],
+        duration,
         "-vcodec",
         "copy",
         "-acodec",
@@ -632,7 +630,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
             fs_1.default.renameSync(root_path + id + "/" + info[id][vidId].fileName[0] + ".ts", root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts");
             const length = yield checkVideoLength(id, vidId);
             winston_1.default.info(id + "_" + vidId + " rename done");
-            //    enqueue(id, vidId, length);
+            enqueue(id, vidId, length);
         }
         else if (info[id][vidId].fileName.length > 1) {
             const inputFile = root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -679,7 +677,7 @@ const mergeVideo = (id, vidId) => __awaiter(void 0, void 0, void 0, function* ()
                         " is deleted.");
                 });
                 const length = yield checkVideoLength(id, vidId);
-                //   enqueue(id, vidId, length);
+                enqueue(id, vidId, length);
             }));
         }
     }
