@@ -1,7 +1,7 @@
 import express, { response } from "express";
 import request from "request";
 import logger from "./winston";
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, exec, spawn } from "child_process";
 import fs from "fs";
 import { google } from "googleapis";
 import { Credentials } from "google-auth-library";
@@ -533,7 +533,7 @@ const doProcess = async () => {
           }
           if (info[id][vidId]["status"] === InfoStatus.TEMP) {
             const length = await checkVideoLength(id, vidId);
-            enqueue(id, vidId, length);
+            //   enqueue(id, vidId, length);
           }
           if (offlineStreamers) {
             logger.info(
@@ -648,7 +648,7 @@ const recordStream = (id: string, vidId: string) => {
 };
 
 const checkVideoLength = async (id: string, vidId: string) => {
-  const checkProcess = spawn("ffmpeg", [
+  /*const checkProcess = spawn("ffmpeg", [
     "-i",
     root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
     "2>&1",
@@ -665,7 +665,16 @@ const checkVideoLength = async (id: string, vidId: string) => {
     "|",
     "sed",
     "s/,//",
-  ]); //return code: 3221225786, 130;
+  ]); //return code: 3221225786, 130;*/
+  exec(
+    "ffmpeg -i undefined_0_final.ts 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//",
+    function (err, stdout, stderr) {
+      if (err) logger.error("err:\n" + err);
+      if (stderr) logger.info("stderr:\n" + stderr);
+      logger.info("stdout:\n" + stdout);
+    }
+  );
+  /*
   let waitForCrop = true;
   let returnValue = 1;
   checkProcess.stderr.on("data", async (data) => {
@@ -691,6 +700,7 @@ const checkVideoLength = async (id: string, vidId: string) => {
     await sleep(5);
   }
   return returnValue;
+  */
 };
 
 const cropVideo = async (
@@ -781,7 +791,7 @@ const mergeVideo = async (id: string, vidId: string) => {
       );
       const length = await checkVideoLength(id, vidId);
       logger.info(id + "_" + vidId + " rename done");
-      enqueue(id, vidId, length);
+      //    enqueue(id, vidId, length);
     } else if (info[id][vidId].fileName.length > 1) {
       const inputFile =
         root_path + id + "/" + info[id][vidId].fileName[0] + ".txt";
@@ -837,7 +847,7 @@ const mergeVideo = async (id: string, vidId: string) => {
           }
         );
         const length = await checkVideoLength(id, vidId);
-        enqueue(id, vidId, length);
+        //   enqueue(id, vidId, length);
       });
     }
   } catch (e) {
