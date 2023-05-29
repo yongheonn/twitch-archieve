@@ -431,11 +431,6 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                     if (info[id][vidId]["status"] === InfoStatus.READY) {
                         recordStream(id, vidId);
                     }
-                    if (info[id][vidId]["status"] === InfoStatus.TEMP) {
-                        info[id][vidId]["status"] = InfoStatus.MERGING;
-                        const length = yield checkVideoLength(id, vidId);
-                        enqueue(id, vidId, length);
-                    }
                     if (offlineStreamers) {
                         winston_1.default.info(offlineStreamers +
                             "is offline. Check again in " +
@@ -986,29 +981,7 @@ const setDefaultResetTime = () => {
 const temp = () => {
     info = {
         paka9999: {},
-        dopa24: {
-            "40344057431": {
-                title: "하위용^^",
-                game: [
-                    "League of Legends",
-                    "Warcraft III",
-                    "서버 프로그램 종료",
-                    "Warcraft III",
-                    "StarCraft",
-                ],
-                changeTime: [
-                    1685366685.974, 1685377704.946, 1685384654.378, 1685384678.681,
-                    1685387141.84,
-                ],
-                quality: "1080p60",
-                status: 7,
-                fileName: ["undefined_0", "undefined_0_1"],
-                patCheck: 0,
-                queueTime: undefined,
-                num: 0,
-                queueNum: 0,
-            },
-        },
+        dopa24: {},
         pikra10: {},
         xkwhd: {
             "40342447831": {
