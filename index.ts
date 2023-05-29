@@ -650,7 +650,7 @@ const recordStream = (id: string, vidId: string) => {
 const checkVideoLength = async (id: string, vidId: string) => {
   const checkProcess = spawn("ffmpeg", [
     "-i",
-    info[id][vidId].fileName[0] + "_final.ts",
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
     "2>&1",
     "|",
     "grep",
@@ -703,7 +703,7 @@ const cropVideo = async (
   for (let i = 0; i < quotient; i++) {
     const cropProcess = spawn("ffmpeg", [
       "-i",
-      info[id][vidId].fileName[0] + "_final.ts",
+      root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       "-ss",
       (i * 11).toString() + ":00:00",
       "to",
@@ -712,7 +712,13 @@ const cropVideo = async (
       "copy",
       "-acodec",
       "copy",
-      info[id][vidId].fileName[0] + "_final_" + i.toString() + ".ts",
+      root_path +
+        id +
+        "/" +
+        info[id][vidId].fileName[0] +
+        "_final_" +
+        i.toString() +
+        ".ts",
     ]);
     cropProcess.on("exit", async (result) => {
       waitForCrop = false;
@@ -724,7 +730,7 @@ const cropVideo = async (
   }
   const cropProcess = spawn("ffmpeg", [
     "-i",
-    info[id][vidId].fileName[0] + "_final.ts",
+    root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
     "-ss",
     (quotient * 11).toString() + ":00:00",
     "to",
@@ -733,7 +739,13 @@ const cropVideo = async (
     "copy",
     "-acodec",
     "copy",
-    info[id][vidId].fileName[0] + "_final_" + quotient.toString() + ".ts",
+    root_path +
+      id +
+      "/" +
+      info[id][vidId].fileName[0] +
+      "_final_" +
+      quotient.toString() +
+      ".ts",
   ]);
 
   cropProcess.on("exit", async (result) => {

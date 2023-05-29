@@ -527,7 +527,7 @@ const recordStream = (id, vidId) => {
 const checkVideoLength = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
     const checkProcess = (0, child_process_1.spawn)("ffmpeg", [
         "-i",
-        info[id][vidId].fileName[0] + "_final.ts",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         "2>&1",
         "|",
         "grep",
@@ -570,7 +570,7 @@ const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, voi
     for (let i = 0; i < quotient; i++) {
         const cropProcess = (0, child_process_1.spawn)("ffmpeg", [
             "-i",
-            info[id][vidId].fileName[0] + "_final.ts",
+            root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
             "-ss",
             (i * 11).toString() + ":00:00",
             "to",
@@ -579,7 +579,13 @@ const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, voi
             "copy",
             "-acodec",
             "copy",
-            info[id][vidId].fileName[0] + "_final_" + i.toString() + ".ts",
+            root_path +
+                id +
+                "/" +
+                info[id][vidId].fileName[0] +
+                "_final_" +
+                i.toString() +
+                ".ts",
         ]);
         cropProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
             waitForCrop = false;
@@ -591,7 +597,7 @@ const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, voi
     }
     const cropProcess = (0, child_process_1.spawn)("ffmpeg", [
         "-i",
-        info[id][vidId].fileName[0] + "_final.ts",
+        root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
         "-ss",
         (quotient * 11).toString() + ":00:00",
         "to",
@@ -600,7 +606,13 @@ const cropVideo = (id, vidId, quotient, length) => __awaiter(void 0, void 0, voi
         "copy",
         "-acodec",
         "copy",
-        info[id][vidId].fileName[0] + "_final_" + quotient.toString() + ".ts",
+        root_path +
+            id +
+            "/" +
+            info[id][vidId].fileName[0] +
+            "_final_" +
+            quotient.toString() +
+            ".ts",
     ]);
     cropProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
         fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
