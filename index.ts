@@ -772,7 +772,7 @@ const mergeVideo = async (id: string, vidId: string) => {
         data += "file " + fileName + ".ts" + "\n";
       }
       fs.writeFileSync(inputFile, data, "utf8");
-      info[id][vidId].procs = spawn("ffmpeg", [
+      const concatProcess = spawn("ffmpeg", [
         "-safe",
         "0",
         "-f",
@@ -784,7 +784,7 @@ const mergeVideo = async (id: string, vidId: string) => {
         root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
       ]); //return code: 3221225786, 130;
 
-      info[id][vidId].procs?.on("exit", async (code) => {
+      concatProcess.on("exit", async (code) => {
         logger.info(id + " merge is done. status: " + code);
         for (const fileName of info[id][vidId].fileName) {
           fs.unlink(root_path + id + "/" + fileName + ".ts", (err) => {
@@ -816,7 +816,6 @@ const mergeVideo = async (id: string, vidId: string) => {
             );
           }
         );
-        delete info[id][vidId].procs;
         const length = await checkVideoLength(id, vidId);
         enqueue(id, vidId, length);
       });
@@ -1195,10 +1194,66 @@ const setDefaultResetTime = () => {
   }
 };
 
+const temp = () => {
+  info = {
+    paka9999: {},
+    dopa24: {
+      "40344057431": {
+        title: "하위용^^",
+        game: [
+          "League of Legends",
+          "Warcraft III",
+          "서버 프로그램 종료",
+          "Warcraft III",
+          "StarCraft",
+        ],
+        changeTime: [
+          1685366685.974, 1685377704.946, 1685384654.378, 1685384678.681,
+          1685387141.84,
+        ],
+        quality: "1080p60",
+        status: 4,
+        fileName: ["undefined_0", "undefined_0_1"],
+        patCheck: 0,
+        queueTime: undefined,
+        num: 0,
+        queueNum: 0,
+      },
+    },
+    pikra10: {},
+    xkwhd: {
+      "40342447831": {
+        title: "내가 C등급 1티어래요..",
+        game: ["VALORANT", "서버 프로그램 종료", "VALORANT"],
+        changeTime: [1685322091.435, 1685384654.378, 1685384678.681],
+        quality: "1080p60",
+        status: 5,
+        fileName: ["40342447831", "40342447831_1"],
+        pat: {
+          token: {
+            value:
+              '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"xkwhd","channel_id":175163251,"chansub":{"restricted_bitrates":[],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685323291,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+            signature: "f199a951f63754f349520eed8bca11ddf7614b32",
+            __typename: "PlaybackAccessToken",
+          },
+          expire: 1685323291,
+        },
+        patCheck: 0,
+        queueTime: undefined,
+        num: 0,
+        queueNum: 0,
+      },
+    },
+    aba4647: {},
+    tmxk319: {},
+  };
+};
+
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
+  temp();
   setDefaultResetTime();
   await getToken();
   stream_url_params = createStreamParams(streamerIds);
