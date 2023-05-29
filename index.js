@@ -451,7 +451,7 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
         let sortObj = [];
         for (const id in info) {
             for (const vidId in info[id]) {
-                if (info[id][vidId].status == InfoStatus.QUEUE) {
+                if (info[id][vidId].status === InfoStatus.QUEUE) {
                     sortObj.push([info[id][vidId].queueTime, id, vidId]);
                 }
             }
@@ -459,7 +459,7 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
         sortObj.sort(function (a, b) {
             return b[0] - a[0];
         });
-        if (sortObj.length !== 0) {
+        if (sortObj.length > 0) {
             winston_1.default.info("uploading sort start: " + sortObj);
             for (const queue of sortObj) {
                 if (info[queue[1]][queue[2]].num === 1) {

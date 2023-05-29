@@ -555,7 +555,7 @@ const processYoutubeQueue = async () => {
     let sortObj = [];
     for (const id in info) {
       for (const vidId in info[id]) {
-        if (info[id][vidId].status == InfoStatus.QUEUE) {
+        if (info[id][vidId].status === InfoStatus.QUEUE) {
           sortObj.push([info[id][vidId].queueTime, id, vidId]);
         }
       }
@@ -563,7 +563,7 @@ const processYoutubeQueue = async () => {
     sortObj.sort(function (a: any, b: any) {
       return b[0] - a[0];
     });
-    if (sortObj.length !== 0) {
+    if (sortObj.length > 0) {
       logger.info("uploading sort start: " + sortObj);
       for (const queue of sortObj) {
         if (info[queue[1] as string][queue[2] as string].num === 1) {
