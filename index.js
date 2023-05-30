@@ -934,7 +934,7 @@ app.use(express_1.default.urlencoded({ extended: false }));
 app.post("/except_games", function (req, res) {
     try {
         const data = req.body;
-        winston_1.default.info("except_games req body: " + data.exceptGame);
+        winston_1.default.info("except_games req body: " + JSON.stringify(data));
         exceptGames = data.exceptGame.split(",");
         winston_1.default.info("update exceptGames: " + exceptGames);
         res.status(200).send();
