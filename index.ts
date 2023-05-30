@@ -1134,7 +1134,7 @@ app.get("/", function (req, res) {
 });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 
 app.post("/except_games", function (req, res) {
   try {

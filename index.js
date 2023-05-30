@@ -930,7 +930,7 @@ app.get("/", function (req, res) {
     });
 });
 app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
+app.use(express_1.default.urlencoded({ extended: false }));
 app.post("/except_games", function (req, res) {
     try {
         const data = req.body;
