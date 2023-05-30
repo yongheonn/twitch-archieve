@@ -1136,7 +1136,7 @@ app.get("/", function (req, res) {
 app.get("/except_games", function (req, res) {
   try {
     const data: string = JSON.parse(req.body);
-    exceptGames = data.split(", ");
+    exceptGames = data.split(",");
     logger.info("update exceptGames: " + exceptGames);
     res.status(200).send();
   } catch (e) {
