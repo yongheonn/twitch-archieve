@@ -932,6 +932,7 @@ app.get("/", function (req, res) {
 app.post("/except_games", function (req, res) {
     try {
         const data = req.body;
+        winston_1.default.info("except_games req body: " + data);
         exceptGames = data.split(",");
         winston_1.default.info("update exceptGames: " + exceptGames);
         res.status(200).send();
