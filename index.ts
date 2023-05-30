@@ -1133,10 +1133,12 @@ app.get("/", function (req, res) {
   });
 });
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.post("/except_games", function (req, res) {
   try {
-    const data = req.body;
-    logger.info("except_games req body: " + data);
+    const data = req.body.exceptGame;
     exceptGames = data.split(",");
     logger.info("update exceptGames: " + exceptGames);
     res.status(200).send();
