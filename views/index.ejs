@@ -39,6 +39,7 @@
       },
     };
     async function onClickHandler() {
+      option.body = document.getElementById("exceptGames").value;
       const response = await fetch(
         "http://138.2.37.53:3000/except_games",
         option
