@@ -1139,7 +1139,7 @@ app.use(express.urlencoded({ extended: true }));
 app.post("/except_games", function (req, res) {
   try {
     const data = req.body;
-    logger.info("except_games req body: " + data);
+    logger.info("except_games req body: " + data.exceptGame);
     exceptGames = data.exceptGame.split(",");
     logger.info("update exceptGames: " + exceptGames);
     res.status(200).send();
