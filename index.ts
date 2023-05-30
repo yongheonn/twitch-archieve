@@ -1133,7 +1133,7 @@ app.get("/", function (req, res) {
   });
 });
 
-app.get("/except_games", function (req, res) {
+app.post("/except_games", function (req, res) {
   try {
     const data: string = JSON.parse(req.body);
     exceptGames = data.split(",");

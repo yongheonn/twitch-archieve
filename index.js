@@ -929,7 +929,7 @@ app.get("/", function (req, res) {
         exceptGames: exceptGames,
     });
 });
-app.get("/except_games", function (req, res) {
+app.post("/except_games", function (req, res) {
     try {
         const data = JSON.parse(req.body);
         exceptGames = data.split(",");
