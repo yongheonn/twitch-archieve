@@ -38,7 +38,7 @@ let offlineStreamers = [...streamerIds];
 let info = {};
 let quality = "1080p60";
 let resetTime = new Date();
-const exceptGames = ["서버 프로그램 종료"]; //
+let exceptGames = ["League of Lengends", "서버 프로그램 종료"]; //
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
@@ -926,7 +926,20 @@ app.get("/", function (req, res) {
         ],
         errorCount: errorCount,
         resetTime: resetTime,
+        exceptGames: exceptGames,
     });
+});
+app.get("/except_games", function (req, res) {
+    try {
+        const data = JSON.parse(req.body);
+        exceptGames = data.split(", ");
+        winston_1.default.info("update exceptGames: " + exceptGames);
+        res.status(200).send();
+    }
+    catch (e) {
+        winston_1.default.error("error update exceptGames: " + e);
+        res.status(400).send();
+    }
 });
 /*
 app.get("/redirect", function (req, res) {
