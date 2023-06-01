@@ -253,6 +253,7 @@ const getPat = async (id: string, vidId: string) => {
       return false;
     }
   } catch (e) {
+    console.log(e); //temp log
     logger.error("error: " + e);
     errorCount++;
   }
@@ -332,6 +333,7 @@ const checkQuality = async (id: string, vidId: string) => {
       }
     }
   } catch (e) {
+    console.log(e); //temp log
     logger.error("quality error: " + e);
     errorCount++;
     return false;

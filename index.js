@@ -201,6 +201,7 @@ const getPat = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     catch (e) {
+        console.log(e); //temp log
         winston_1.default.error("error: " + e);
         errorCount++;
     }
@@ -276,6 +277,7 @@ const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* 
         }
     }
     catch (e) {
+        console.log(e); //temp log
         winston_1.default.error("quality error: " + e);
         errorCount++;
         return false;
