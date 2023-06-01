@@ -354,7 +354,7 @@ const checkLive = async () => {
     if (response && response.statusCode == 200) {
       const streamList = JSON.parse(response.body)["data"] as Stream[];
       for (const stream of streamList) {
-        const isNew = !info[stream["user_login"]].hasOwnProperty(stream["id"]);
+        const isNew = !(stream["id"] in info[stream["user_login"]]);
         let isValid: boolean | undefined = false;
         const isExceptGame = exceptGames.includes(stream["game_name"]);
         if (isNew) {
