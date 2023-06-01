@@ -12,14 +12,15 @@ const appendTimestamp = winston_1.default.format((info, opts) => {
         info.timestamp = (0, moment_timezone_1.default)().tz(opts.tz).format("YYYY-MM-DD HH:mm:ss");
     return info;
 });
-const { combine, timestamp, label, printf } = winston_1.default.format;
+const { combine, timestamp, label, printf, errors } = winston_1.default.format;
 const logDir = `${process_1.default.cwd()}/logs`;
 const logFormat = printf(({ level, message, label, timestamp }) => {
     return `${timestamp} [${label}] ${level}: ${message}`; // 날짜 [시스템이름] 로그레벨 메세지
 });
 let logger = winston_1.default.createLogger({
     format: combine(appendTimestamp({ tz: "Asia/Seoul" }), label({ label: "Twitch Archive" }), // 어플리케이션 이름
-    logFormat // log 출력 포맷
+    logFormat, // log 출력 포맷
+    errors({ stack: true })
     //? format: combine() 에서 정의한 timestamp와 label 형식값이 logFormat에 들어가서 정의되게 된다. level이나 message는 콘솔에서 자동 정의
     ),
     transports: [
