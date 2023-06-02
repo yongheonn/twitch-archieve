@@ -201,7 +201,6 @@ const getPat = (id, vidId) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     catch (e) {
-        console.log(e); //temp log
         winston_1.default.error("error: " + e);
         errorCount++;
     }
@@ -277,7 +276,6 @@ const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* 
         }
     }
     catch (e) {
-        console.log(e); //temp log
         winston_1.default.error("quality error: " + e);
         errorCount++;
         return false;
@@ -432,15 +430,12 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                     if (info[id][vidId]["status"] === InfoStatus.READY) {
                         recordStream(id, vidId);
                     }
-                    if (offlineStreamers) {
-                        winston_1.default.info(offlineStreamers +
-                            "is offline. Check again in " +
-                            refresh +
-                            " seconds.");
-                        //print('Now Online:', list(self.procs.keys()))
-                    }
+                    //print('Now Online:', list(self.procs.keys()))
                 }
             }
+        }
+        if (offlineStreamers) {
+            winston_1.default.info(offlineStreamers + "is offline. Check again in " + refresh + " seconds.");
             processYoutubeQueue()
                 .then(() => null)
                 .catch(() => null);

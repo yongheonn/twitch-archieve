@@ -253,7 +253,6 @@ const getPat = async (id: string, vidId: string) => {
       return false;
     }
   } catch (e) {
-    console.log(e); //temp log
     logger.error("error: " + e);
     errorCount++;
   }
@@ -333,7 +332,6 @@ const checkQuality = async (id: string, vidId: string) => {
       }
     }
   } catch (e) {
-    console.log(e); //temp log
     logger.error("quality error: " + e);
     errorCount++;
     return false;
@@ -533,17 +531,15 @@ const doProcess = async () => {
           if (info[id][vidId]["status"] === InfoStatus.READY) {
             recordStream(id, vidId);
           }
-          if (offlineStreamers) {
-            logger.info(
-              offlineStreamers +
-                "is offline. Check again in " +
-                refresh +
-                " seconds."
-            );
-            //print('Now Online:', list(self.procs.keys()))
-          }
+
+          //print('Now Online:', list(self.procs.keys()))
         }
       }
+    }
+    if (offlineStreamers) {
+      logger.info(
+        offlineStreamers + "is offline. Check again in " + refresh + " seconds."
+      );
       processYoutubeQueue()
         .then(() => null)
         .catch(() => null);
