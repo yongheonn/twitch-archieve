@@ -646,7 +646,7 @@ const checkVideoLength = async (id: string, vidId: string) => {
   let returnValue = 1;
   ffprobe(
     root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
-    function (err, metadata) {
+    async function (err, metadata) {
       const duration = metadata.format.duration;
       if (duration) {
         const hour = Math.floor(duration / 3600);
@@ -667,7 +667,12 @@ const checkVideoLength = async (id: string, vidId: string) => {
               ":" +
               second
           );
-          cropVideo(id, vidId, quotient, hour + ":" + minute + ":" + second);
+          await cropVideo(
+            id,
+            vidId,
+            quotient,
+            hour + ":" + minute + ":" + second
+          );
           returnValue = quotient + 1;
         }
       }
@@ -1224,32 +1229,44 @@ const temp = () => {
   info = {
     paka9999: {},
     dopa24: {},
-    pikra10: {},
-    xkwhd: {
-      "40342447831": {
-        title: "내가 C등급 1티어래요..",
-        game: ["VALORANT", "서버 프로그램 종료", "VALORANT"],
-        changeTime: [1685322091.435, 1685384654.378, 1685384678.681],
+    pikra10: {
+      "42265570843": {
+        title: "토요일",
+        game: ["Just Chatting", "서버 프로그램 종료"],
+        changeTime: [1685757072.288, 1685776716.022],
         quality: "1080p60",
         status: 4,
-        fileName: ["40342447831", "40342447831_1"],
+        fileName: ["42265570843"],
         pat: {
           token: {
             value:
-              '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"xkwhd","channel_id":175163251,"chansub":{"restricted_bitrates":[],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685323291,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
-            signature: "f199a951f63754f349520eed8bca11ddf7614b32",
+              '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"pikra10","channel_id":194230187,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685758272,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+            signature: "71be16a91617537a4dfabc2591bcdb2f427c4d23",
             __typename: "PlaybackAccessToken",
           },
-          expire: 1685323291,
+          expire: 1685758272,
         },
         patCheck: 0,
-        queueTime: undefined,
         num: 0,
         queueNum: 0,
+        queueTime: 1685776716.022,
+      },
+    },
+    xkwhd: {
+      "42262032427": {
+        title: "알을 깨야만 한다",
+        game: ["VALORANT"],
+        changeTime: [1685672482],
+        quality: "1080p60",
+        status: 4,
+        fileName: ["42262032427"],
+        patCheck: 0,
+        num: 0,
+        queueNum: 0,
+        queueTime: 1685715682,
       },
     },
     aba4647: {},
-    tmxk319: {},
   };
 };
 
@@ -1257,6 +1274,7 @@ app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
+  temp();
   setDefaultResetTime();
   await getToken();
   stream_url_params = createStreamParams(streamerIds);
