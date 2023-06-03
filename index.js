@@ -572,9 +572,12 @@ const cropVideo = (id, vidId, quotient, duration) => __awaiter(void 0, void 0, v
                 i.toString() +
                 ".ts",
         ]);
-        cropProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
+        cropProcess.stderr.on("data", (data) => {
+            winston_1.default.info("cut process: " + data);
+        });
+        cropProcess.on("exit", (result) => {
             waitForCrop = false;
-        }));
+        });
         while (waitForCrop) {
             yield sleep(5);
         }
@@ -599,7 +602,7 @@ const cropVideo = (id, vidId, quotient, duration) => __awaiter(void 0, void 0, v
             quotient.toString() +
             ".ts",
     ]);
-    cropProcess.on("exit", (result) => __awaiter(void 0, void 0, void 0, function* () {
+    cropProcess.on("exit", (result) => {
         fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
             if (err)
                 throw err;
@@ -611,7 +614,7 @@ const cropVideo = (id, vidId, quotient, duration) => __awaiter(void 0, void 0, v
                 " is deleted.");
             waitForCrop = false;
         });
-    }));
+    });
     while (waitForCrop) {
         yield sleep(5);
     }
