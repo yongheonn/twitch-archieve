@@ -1024,20 +1024,7 @@ const temp = () => {
                 queueTime: 1685776716.022,
             },
         },
-        xkwhd: {
-            "42262032427": {
-                title: "알을 깨야만 한다",
-                game: ["VALORANT"],
-                changeTime: [1685672482],
-                quality: "1080p60",
-                status: 4,
-                fileName: ["42262032427"],
-                patCheck: 0,
-                num: 0,
-                queueNum: 0,
-                queueTime: 1685715682,
-            },
-        },
+        xkwhd: {},
         aba4647: {},
     };
 };
