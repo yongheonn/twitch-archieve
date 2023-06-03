@@ -602,6 +602,9 @@ const cropVideo = (id, vidId, quotient, duration) => __awaiter(void 0, void 0, v
             quotient.toString() +
             ".ts",
     ]);
+    cropProcess.stderr.on("data", (data) => {
+        winston_1.default.info("cut process: " + data);
+    });
     cropProcess.on("exit", (result) => {
         fs_1.default.unlink(root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts", (err) => {
             if (err)

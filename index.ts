@@ -744,6 +744,10 @@ const cropVideo = async (
       ".ts",
   ]);
 
+  cropProcess.stderr.on("data", (data) => {
+    logger.info("cut process: " + data);
+  });
+
   cropProcess.on("exit", (result) => {
     fs.unlink(
       root_path + id + "/" + info[id][vidId].fileName[0] + "_final.ts",
