@@ -1002,28 +1002,7 @@ const temp = () => {
     info = {
         paka9999: {},
         dopa24: {},
-        pikra10: {
-            "42272448651": {
-                title: "흠...",
-                game: ["Just Chatting", "League of Legends"],
-                changeTime: [1685853287.655, 1685863462.474],
-                quality: "1080p60",
-                status: 4,
-                fileName: ["42272448651"],
-                pat: {
-                    token: {
-                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"pikra10","channel_id":194230187,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1685854487,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
-                        signature: "673509302aab4012ac02f12ad2c95e91ad3b0707",
-                        __typename: "PlaybackAccessToken",
-                    },
-                    expire: 1685854487,
-                },
-                patCheck: 0,
-                num: 0,
-                queueNum: 0,
-                queueTime: undefined,
-            },
-        },
+        pikra10: {},
         xkwhd: {},
         aba4647: {},
     };
