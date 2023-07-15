@@ -1231,7 +1231,6 @@ const temp = () => {
     paka9999: {},
     dopa24: {},
     pikra10: {},
-    xkwhd: {},
     aba4647: {},
   };
 };
