@@ -17,13 +17,7 @@ let access_token = "";
 let stream_url_params = "";
 let errorCount = 0;
 let waitUploading = false;
-const streamerIds: string[] = [
-  "paka9999",
-  "dopa24",
-  "pikra10",
-  "xkwhd",
-  "aba4647",
-];
+const streamerIds: string[] = ["paka9999", "dopa24", "pikra10", "aba4647"];
 let offlineStreamers: string[] = [...streamerIds];
 let info: Info = {};
 let quality = "1080p60";
