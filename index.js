@@ -1072,7 +1072,7 @@ app.listen(3000, function () {
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();
-        temp();
+        //temp();
         setDefaultResetTime();
         yield getToken();
         stream_url_params = createStreamParams(streamerIds);
