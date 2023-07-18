@@ -995,9 +995,74 @@ const setDefaultResetTime = () => {
 };
 const temp = () => {
     info = {
-        paka9999: {},
-        dopa24: {},
-        pikra10: {},
+        paka9999: {
+            "40459733927": {
+                title: "마스터 꼭 가고싶습니다",
+                game: ["Teamfight Tactics", "Rust", "서버 프로그램 종료", "Rust"],
+                changeTime: [
+                    1689669816.415, 1689672276.281, 1689692664.573, 1689695187.914,
+                ],
+                quality: "1080p60",
+                status: 1,
+                fileName: ["40459733927", "40459733927_1"],
+                pat: {
+                    token: {
+                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"paka9999","channel_id":164459256,"chansub":{"restricted_bitrates":[],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1689671016,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+                        signature: "72e77de58022a057bf0fedb7e95cd86a0944cf3e",
+                        __typename: "PlaybackAccessToken",
+                    },
+                    expire: 1689671016,
+                },
+                patCheck: 0,
+                num: 0,
+                queueTime: 0,
+                queueNum: 0,
+            },
+        },
+        dopa24: {
+            "40459253015": {
+                title: "6시 러스트 스트리 머서버 대기방",
+                game: ["Just Chatting", "StarCraft", "Rust"],
+                changeTime: [1689653064.187, 1689657217.817, 1689668122.631],
+                queueTime: 1689687356084,
+                quality: "1080p60",
+                status: 6,
+                fileName: ["40459253015"],
+                pat: {
+                    token: {
+                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"dopa24","channel_id":536083731,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1689654264,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+                        signature: "dde693b99052e413cf6a6ab7f84aefe2f78edb76",
+                        __typename: "PlaybackAccessToken",
+                    },
+                    expire: 1689654264,
+                },
+                patCheck: 0,
+                num: 1,
+                queueNum: 0,
+            },
+        },
+        pikra10: {
+            "40456487895": {
+                title: "8연패 -> 전승",
+                game: ["Teamfight Tactics", "Warcraft III"],
+                changeTime: [1689559700.026, 1689569916.646],
+                queueTime: 1689573465387,
+                quality: "1080p60",
+                status: 6,
+                fileName: ["40456487895"],
+                pat: {
+                    token: {
+                        value: '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"pikra10","channel_id":194230187,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1689560900,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
+                        signature: "7aeb30c9bcef5d9dc27852da850c24f8c3c89c99",
+                        __typename: "PlaybackAccessToken",
+                    },
+                    expire: 1689560900,
+                },
+                patCheck: 0,
+                num: 1,
+                queueNum: 0,
+            },
+        },
         aba4647: {},
     };
 };
@@ -1007,7 +1072,7 @@ app.listen(3000, function () {
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();
-        //  temp();
+        temp();
         setDefaultResetTime();
         yield getToken();
         stream_url_params = createStreamParams(streamerIds);
