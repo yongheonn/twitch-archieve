@@ -687,12 +687,13 @@ const youtubeUpload = (id, vidId, num) => {
     // 3. UTC to KST (UTC + 9시간)
     const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
     const kr_curr = new Date(utc + KR_TIME_DIFF);
-    const title = id +
+    let title = id +
         " " +
         kr_curr.toLocaleString() +
         " " +
         info[id][vidId]["title"] +
         (num === -1 ? "" : "_" + num);
+    title = title.replace(/<>()/g, "");
     const exceptGameIndex = [];
     let fromIndex = 0;
     for (const exceptGame of exceptGames) {
