@@ -1240,7 +1240,7 @@ app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
-  temp();
+  //  temp();
   setDefaultResetTime();
   await getToken();
   stream_url_params = createStreamParams(streamerIds);
