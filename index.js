@@ -27,6 +27,7 @@ let access_token = "";
 let stream_url_params = "";
 let errorCount = 0;
 let waitUploading = false;
+let isProcessingQueue = false;
 const streamerIds = ["paka9999", "dopa24", "pikra10", "aba4647"];
 let offlineStreamers = [...streamerIds];
 let info = {};
@@ -430,14 +431,17 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
         }
         if (offlineStreamers) {
             winston_1.default.info(offlineStreamers + "is offline. Check again in " + refresh + " seconds.");
-            processYoutubeQueue()
-                .then(() => null)
-                .catch(() => null);
+            if (!isProcessingQueue) {
+                processYoutubeQueue()
+                    .then(() => null)
+                    .catch(() => null);
+            }
         }
         yield sleep(refresh);
     }
 });
 const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* () {
+    isProcessingQueue = true;
     const now = new Date();
     if (now.getTime() > resetTime.getTime()) {
         let sortObj = [];
@@ -484,6 +488,7 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
             }
         }
     }
+    isProcessingQueue = false;
 });
 const recordStream = (id, vidId) => {
     var _a, _b, _c;

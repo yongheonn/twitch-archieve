@@ -17,6 +17,7 @@ let access_token = "";
 let stream_url_params = "";
 let errorCount = 0;
 let waitUploading = false;
+let isProcessingQueue = false;
 const streamerIds: string[] = ["paka9999", "dopa24", "pikra10", "aba4647"];
 let offlineStreamers: string[] = [...streamerIds];
 let info: Info = {};
@@ -534,15 +535,18 @@ const doProcess = async () => {
       logger.info(
         offlineStreamers + "is offline. Check again in " + refresh + " seconds."
       );
-      processYoutubeQueue()
-        .then(() => null)
-        .catch(() => null);
+      if (!isProcessingQueue) {
+        processYoutubeQueue()
+          .then(() => null)
+          .catch(() => null);
+      }
     }
     await sleep(refresh);
   }
 };
 
 const processYoutubeQueue = async () => {
+  isProcessingQueue = true;
   const now = new Date();
   if (now.getTime() > resetTime.getTime()) {
     let sortObj = [];
@@ -595,6 +599,7 @@ const processYoutubeQueue = async () => {
       }
     }
   }
+  isProcessingQueue = false;
 };
 
 const recordStream = (id: string, vidId: string) => {
