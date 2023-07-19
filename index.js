@@ -693,7 +693,7 @@ const youtubeUpload = (id, vidId, num) => {
         " " +
         info[id][vidId]["title"] +
         (num === -1 ? "" : "_" + num);
-    title = title.replace(/<>()/g, "");
+    title = title.replace(/[<>()]/gim, "");
     const exceptGameIndex = [];
     let fromIndex = 0;
     for (const exceptGame of exceptGames) {
