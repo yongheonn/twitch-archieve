@@ -604,6 +604,7 @@ const processYoutubeQueue = async () => {
       }
     }
   }
+  logger.info("end processing queue");
   isProcessingQueue = false;
 };
 

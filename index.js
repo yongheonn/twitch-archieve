@@ -490,6 +490,7 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
             }
         }
     }
+    winston_1.default.info("end processing queue");
     isProcessingQueue = false;
 });
 const recordStream = (id, vidId) => {
