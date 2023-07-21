@@ -571,8 +571,10 @@ const processYoutubeQueue = async () => {
             );
             await sleep(5);
           }
-          if (new Date().getTime() < resetTime.getTime()) return;
-        } else {
+          if (new Date().getTime() < resetTime.getTime()) {
+            isProcessingQueue = false;
+            return;
+          }
           const startIndex =
             info[queue[1] as string][queue[2] as string].queueNum;
           for (
@@ -593,7 +595,10 @@ const processYoutubeQueue = async () => {
               );
               await sleep(5);
             }
-            if (new Date().getTime() < resetTime.getTime()) return;
+            if (new Date().getTime() < resetTime.getTime()) {
+              isProcessingQueue = false;
+              return;
+            }
           }
         }
       }
