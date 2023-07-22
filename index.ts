@@ -576,6 +576,7 @@ const processYoutubeQueue = async () => {
             isProcessingQueue = false;
             return;
           }
+        } else {
           const startIndex =
             info[queue[1] as string][queue[2] as string].queueNum;
           for (
@@ -602,6 +603,7 @@ const processYoutubeQueue = async () => {
             }
           }
         }
+        logger.info("processing next queue");
       }
     }
   }

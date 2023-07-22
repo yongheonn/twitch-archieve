@@ -469,6 +469,8 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
                         isProcessingQueue = false;
                         return;
                     }
+                }
+                else {
                     const startIndex = info[queue[1]][queue[2]].queueNum;
                     for (let i = startIndex; i < info[queue[1]][queue[2]].num; i++) {
                         youtubeUpload(queue[1], queue[2], i);
@@ -488,6 +490,7 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
                         }
                     }
                 }
+                winston_1.default.info("processing next queue");
             }
         }
     }
