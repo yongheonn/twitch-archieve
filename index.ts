@@ -535,6 +535,7 @@ const doProcess = async () => {
       logger.info(
         offlineStreamers + "is offline. Check again in " + refresh + " seconds."
       );
+      logger.info("isProcessingQueue: " + isProcessingQueue);
       if (!isProcessingQueue) {
         processYoutubeQueue()
           .then(() => null)

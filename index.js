@@ -431,6 +431,7 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
         }
         if (offlineStreamers) {
             winston_1.default.info(offlineStreamers + "is offline. Check again in " + refresh + " seconds.");
+            winston_1.default.info("isProcessingQueue: " + isProcessingQueue);
             if (!isProcessingQueue) {
                 processYoutubeQueue()
                     .then(() => null)
