@@ -444,44 +444,26 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
 const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* () {
     isProcessingQueue = true;
     const now = new Date();
-    if (now.getTime() > resetTime.getTime()) {
-        let sortObj = [];
-        for (const id in info) {
-            for (const vidId in info[id]) {
-                if (info[id][vidId].status === InfoStatus.QUEUE) {
-                    sortObj.push([info[id][vidId].queueTime, id, vidId]);
+    try {
+        if (now.getTime() > resetTime.getTime()) {
+            let sortObj = [];
+            for (const id in info) {
+                for (const vidId in info[id]) {
+                    if (info[id][vidId].status === InfoStatus.QUEUE) {
+                        sortObj.push([info[id][vidId].queueTime, id, vidId]);
+                    }
                 }
             }
-        }
-        sortObj.sort(function (a, b) {
-            return b[0] - a[0];
-        });
-        if (sortObj.length > 0) {
-            winston_1.default.info("uploading sort start: " + sortObj);
-            for (const queue of sortObj) {
-                if (info[queue[1]][queue[2]].num === 1) {
-                    youtubeUpload(queue[1], queue[2], -1);
-                    while (waitUploading) {
-                        winston_1.default.info("waiting uploading " + queue[1] + "_" + queue[2] + " completed");
-                        yield sleep(5);
-                    }
-                    if (new Date().getTime() < resetTime.getTime()) {
-                        isProcessingQueue = false;
-                        return;
-                    }
-                }
-                else {
-                    const startIndex = info[queue[1]][queue[2]].queueNum;
-                    for (let i = startIndex; i < info[queue[1]][queue[2]].num; i++) {
-                        youtubeUpload(queue[1], queue[2], i);
+            sortObj.sort(function (a, b) {
+                return b[0] - a[0];
+            });
+            if (sortObj.length > 0) {
+                winston_1.default.info("uploading sort start: " + sortObj);
+                for (const queue of sortObj) {
+                    if (info[queue[1]][queue[2]].num === 1) {
+                        youtubeUpload(queue[1], queue[2], -1);
                         while (waitUploading) {
-                            winston_1.default.info("waiting uploading " +
-                                queue[1] +
-                                "_" +
-                                queue[2] +
-                                "_" +
-                                i +
-                                " completed");
+                            winston_1.default.info("waiting uploading " + queue[1] + "_" + queue[2] + " completed");
                             yield sleep(5);
                         }
                         if (new Date().getTime() < resetTime.getTime()) {
@@ -489,13 +471,37 @@ const processYoutubeQueue = () => __awaiter(void 0, void 0, void 0, function* ()
                             return;
                         }
                     }
+                    else {
+                        const startIndex = info[queue[1]][queue[2]].queueNum;
+                        for (let i = startIndex; i < info[queue[1]][queue[2]].num; i++) {
+                            youtubeUpload(queue[1], queue[2], i);
+                            while (waitUploading) {
+                                winston_1.default.info("waiting uploading " +
+                                    queue[1] +
+                                    "_" +
+                                    queue[2] +
+                                    "_" +
+                                    i +
+                                    " completed");
+                                yield sleep(5);
+                            }
+                            if (new Date().getTime() < resetTime.getTime()) {
+                                isProcessingQueue = false;
+                                return;
+                            }
+                        }
+                    }
+                    winston_1.default.info("processing next queue");
                 }
-                winston_1.default.info("processing next queue");
             }
         }
+        winston_1.default.info("end processing queue");
+        isProcessingQueue = false;
     }
-    winston_1.default.info("end processing queue");
-    isProcessingQueue = false;
+    catch (e) {
+        winston_1.default.error(e);
+        isProcessingQueue = false;
+    }
 });
 const recordStream = (id, vidId) => {
     var _a, _b, _c;

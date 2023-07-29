@@ -549,51 +549,27 @@ const doProcess = async () => {
 const processYoutubeQueue = async () => {
   isProcessingQueue = true;
   const now = new Date();
-  if (now.getTime() > resetTime.getTime()) {
-    let sortObj = [];
-    for (const id in info) {
-      for (const vidId in info[id]) {
-        if (info[id][vidId].status === InfoStatus.QUEUE) {
-          sortObj.push([info[id][vidId].queueTime, id, vidId]);
+  try {
+    if (now.getTime() > resetTime.getTime()) {
+      let sortObj = [];
+      for (const id in info) {
+        for (const vidId in info[id]) {
+          if (info[id][vidId].status === InfoStatus.QUEUE) {
+            sortObj.push([info[id][vidId].queueTime, id, vidId]);
+          }
         }
       }
-    }
-    sortObj.sort(function (a: any, b: any) {
-      return b[0] - a[0];
-    });
-    if (sortObj.length > 0) {
-      logger.info("uploading sort start: " + sortObj);
-      for (const queue of sortObj) {
-        if (info[queue[1] as string][queue[2] as string].num === 1) {
-          youtubeUpload(queue[1] as string, queue[2] as string, -1);
-          while (waitUploading) {
-            logger.info(
-              "waiting uploading " + queue[1] + "_" + queue[2] + " completed"
-            );
-            await sleep(5);
-          }
-          if (new Date().getTime() < resetTime.getTime()) {
-            isProcessingQueue = false;
-            return;
-          }
-        } else {
-          const startIndex =
-            info[queue[1] as string][queue[2] as string].queueNum;
-          for (
-            let i = startIndex;
-            i < info[queue[1] as string][queue[2] as string].num;
-            i++
-          ) {
-            youtubeUpload(queue[1] as string, queue[2] as string, i);
+      sortObj.sort(function (a: any, b: any) {
+        return b[0] - a[0];
+      });
+      if (sortObj.length > 0) {
+        logger.info("uploading sort start: " + sortObj);
+        for (const queue of sortObj) {
+          if (info[queue[1] as string][queue[2] as string].num === 1) {
+            youtubeUpload(queue[1] as string, queue[2] as string, -1);
             while (waitUploading) {
               logger.info(
-                "waiting uploading " +
-                  queue[1] +
-                  "_" +
-                  queue[2] +
-                  "_" +
-                  i +
-                  " completed"
+                "waiting uploading " + queue[1] + "_" + queue[2] + " completed"
               );
               await sleep(5);
             }
@@ -601,14 +577,43 @@ const processYoutubeQueue = async () => {
               isProcessingQueue = false;
               return;
             }
+          } else {
+            const startIndex =
+              info[queue[1] as string][queue[2] as string].queueNum;
+            for (
+              let i = startIndex;
+              i < info[queue[1] as string][queue[2] as string].num;
+              i++
+            ) {
+              youtubeUpload(queue[1] as string, queue[2] as string, i);
+              while (waitUploading) {
+                logger.info(
+                  "waiting uploading " +
+                    queue[1] +
+                    "_" +
+                    queue[2] +
+                    "_" +
+                    i +
+                    " completed"
+                );
+                await sleep(5);
+              }
+              if (new Date().getTime() < resetTime.getTime()) {
+                isProcessingQueue = false;
+                return;
+              }
+            }
           }
+          logger.info("processing next queue");
         }
-        logger.info("processing next queue");
       }
     }
+    logger.info("end processing queue");
+    isProcessingQueue = false;
+  } catch (e) {
+    logger.error(e);
+    isProcessingQueue = false;
   }
-  logger.info("end processing queue");
-  isProcessingQueue = false;
 };
 
 const recordStream = (id: string, vidId: string) => {
