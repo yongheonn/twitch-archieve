@@ -7,6 +7,7 @@ import { google } from "googleapis";
 import { Credentials } from "google-auth-library";
 import { start } from "repl";
 import { ffprobe } from "fluent-ffmpeg";
+import { ExceptGames, Oauth2Client, StreamerIds } from "./config";
 const youtube = google.youtube("v3");
 
 // Define our constants, you will change these with your own
@@ -18,12 +19,12 @@ let stream_url_params = "";
 let errorCount = 0;
 let waitUploading = false;
 let isProcessingQueue = false;
-const streamerIds: string[] = ["paka9999", "dopa24", "pikra10", "aba4647"];
+const streamerIds: string[] = StreamerIds;
 let offlineStreamers: string[] = [...streamerIds];
 let info: Info = {};
 let quality = "1080p60";
 let resetTime = new Date();
-let exceptGames = ["League of Lengends", "서버 프로그램 종료"]; //
+let exceptGames = ExceptGames;
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
@@ -971,21 +972,7 @@ const youtubeUpload = (id: string, vidId: string, num: number) => {
       ".ts"
   );
 
-  const oauth2Client = new google.auth.OAuth2(
-    "1024921311743-c0facphte80lu6btgqun3u7tv2lh0aib.apps.googleusercontent.com",
-    "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",
-    "http://localhost:3000/redirect"
-  );
-
-  oauth2Client.credentials = {
-    access_token:
-      "ya29.a0AWY7Cknyh54tEVh_HYSdktHT5KRGjK01nrWJebzQAz5ZtoFZ__YELhVKRHslsyNsWjKCx6ylKOec08A17BYF9MugZyHijHGTfQlF2y3DOfpQHFMlWhcF7DvBTHEqAIRusZM0t80nGsKjLtuskGlRlf7fHycJaCgYKAdASARISFQG1tDrprCZKj9Q74vA1ABcfHI1cHA0163",
-    scope: "https://www.googleapis.com/auth/youtube.upload",
-    token_type: "Bearer",
-    refresh_token:
-      "1//0eAK6-oupNF8mCgYIARAAGA4SNwF-L9Irybu12BeFiGFbtC-lPI1MtxUzSlr4CjE23dYI9k1htp0z1KNoOgmuUXPcnq-K3ExqM_Y",
-    expiry_date: 1683881797962,
-  } as Credentials;
+  const oauth2Client = Oauth2Client;
 
   const config = {
     auth: oauth2Client,
