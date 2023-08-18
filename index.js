@@ -22,8 +22,8 @@ const fluent_ffmpeg_1 = require("fluent-ffmpeg");
 const config_1 = require("./config");
 const youtube = googleapis_1.google.youtube("v3");
 // Define our constants, you will change these with your own
-const TWITCH_CLIENT_ID = "6gkwj5guq4a5vjbpd181ksilve9km5";
-const TWITCH_SECRET = "s8gfl3lvjq557d3klnrn73wecqejpj";
+const clientId = config_1.TWITCH_CLIENT_ID;
+const secret = config_1.TWITCH_SECRET;
 let access_token = "";
 let stream_url_params = "";
 let errorCount = 0;
@@ -94,9 +94,9 @@ function doPostRequest(option) {
 const getToken = () => __awaiter(void 0, void 0, void 0, function* () {
     const option = {
         url: "https://id.twitch.tv/oauth2/token?client_id=" +
-            TWITCH_CLIENT_ID +
+            clientId +
             "&client_secret=" +
-            TWITCH_SECRET +
+            secret +
             "&grant_type=client_credentials",
     };
     const response = yield doPostRequest(option);
@@ -112,7 +112,7 @@ const getToken = () => __awaiter(void 0, void 0, void 0, function* () {
 const revokeToken = () => __awaiter(void 0, void 0, void 0, function* () {
     const option = {
         url: "https://id.twitch.tv/oauth2/revoke?client_id=" +
-            TWITCH_CLIENT_ID +
+            clientId +
             "&token=" +
             access_token,
     };
@@ -285,7 +285,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
             url: "https://api.twitch.tv/helix/streams?" + stream_url_params,
             headers: {
                 Authorization: "Bearer " + access_token,
-                "Client-Id": TWITCH_CLIENT_ID,
+                "Client-Id": clientId,
             },
         };
         offlineStreamers = [...streamerIds];
