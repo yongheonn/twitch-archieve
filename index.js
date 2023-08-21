@@ -262,14 +262,12 @@ const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* 
                     quality +
                     " quality could not be found. Check: " +
                     info[id][vidId].patCheck);
-                if (info[id][vidId].patCheck >= check_max) {
-                    info[id][vidId].quality = live_quality[0];
-                    winston_1.default.info("Change " + id + " stream quality to best.");
-                    info[id][vidId].patCheck = 0;
-                    return true;
-                }
-                yield checkQuality(id, vidId);
+                //       if (info[id][vidId].patCheck >= check_max) {
+                info[id][vidId].quality = live_quality[0];
+                winston_1.default.info("Change " + id + " stream quality to best.");
+                info[id][vidId].patCheck = 0;
                 return true;
+                //      }
             }
         }
     }

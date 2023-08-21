@@ -326,14 +326,12 @@ const checkQuality = async (id: string, vidId: string) => {
             info[id][vidId].patCheck
         );
 
-        if (info[id][vidId].patCheck >= check_max) {
-          info[id][vidId].quality = live_quality[0];
-          logger.info("Change " + id + " stream quality to best.");
-          info[id][vidId].patCheck = 0;
-          return true;
-        }
-        await checkQuality(id, vidId);
+        //       if (info[id][vidId].patCheck >= check_max) {
+        info[id][vidId].quality = live_quality[0];
+        logger.info("Change " + id + " stream quality to best.");
+        info[id][vidId].patCheck = 0;
         return true;
+        //      }
       }
     }
   } catch (e) {
