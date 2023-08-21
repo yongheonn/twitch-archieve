@@ -323,7 +323,7 @@ const checkQuality = async (id: string, vidId: string) => {
             " stream is online. but " +
             quality +
             " quality could not be found. Check: ",
-          +info[id][vidId].patCheck
+          info[id][vidId].patCheck
         );
 
         if (info[id][vidId].patCheck >= check_max) {
@@ -332,7 +332,8 @@ const checkQuality = async (id: string, vidId: string) => {
           info[id][vidId].patCheck = 0;
           return true;
         }
-        return false;
+        await checkQuality(id, vidId);
+        return true;
       }
     }
   } catch (e) {

@@ -260,14 +260,15 @@ const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* 
                 winston_1.default.info(id +
                     " stream is online. but " +
                     quality +
-                    " quality could not be found. Check: ", +info[id][vidId].patCheck);
+                    " quality could not be found. Check: ", info[id][vidId].patCheck);
                 if (info[id][vidId].patCheck >= check_max) {
                     info[id][vidId].quality = live_quality[0];
                     winston_1.default.info("Change " + id + " stream quality to best.");
                     info[id][vidId].patCheck = 0;
                     return true;
                 }
-                return false;
+                yield checkQuality(id, vidId);
+                return true;
             }
         }
     }
