@@ -9,6 +9,7 @@ import { start } from "repl";
 import { ffprobe } from "fluent-ffmpeg";
 import {
   ExceptGames,
+  OnlyChat,
   Oauth2Client,
   StreamerIds,
   TWITCH_CLIENT_ID,
@@ -359,7 +360,9 @@ const checkLive = async () => {
       for (const stream of streamList) {
         const isNew = !(stream["id"] in info[stream["user_login"]]);
         let isValid: boolean | undefined = false;
-        const isExceptGame = exceptGames.includes(stream["game_name"]);
+
+        const isOnlyChatStreamer = OnlyChat.includes(stream["user_login"]);
+
         if (isNew) {
           info[stream["user_login"]][stream["id"]] = {
             title: stream["title"],
@@ -375,6 +378,90 @@ const checkLive = async () => {
             num: 0,
             queueNum: 0,
           };
+        }
+        if (isOnlyChatStreamer) {
+          const isNotChat = stream["game_name"] !== "Just Chatting";
+          if (!isNotChat) {
+            isValid = await checkQuality(stream["user_login"], stream["id"]);
+            logger.info(
+              stream["user_login"] + "_" + stream["id"] + " quality check done"
+            );
+            info[stream["user_login"]][stream["id"]].fileName.push(
+              stream["id"]
+            );
+          }
+          const isRecording =
+            info[stream["user_login"]][stream["id"]]["status"] ===
+            InfoStatus.RECORDING;
+          const isWaiting =
+            info[stream["user_login"]][stream["id"]]["status"] ===
+            InfoStatus.WAITING;
+
+          const isDefault =
+            info[stream["user_login"]][stream["id"]]["status"] ===
+            InfoStatus.DEFAULT;
+
+          const isNewGame =
+            info[stream["user_login"]][stream["id"]].game.at(-1) !==
+            stream["game_name"];
+
+          if (isValid)
+            info[stream["user_login"]][stream["id"]]["status"] =
+              InfoStatus.READY;
+
+          if (isNotChat && isRecording) {
+            info[stream["user_login"]][stream["id"]]["status"] =
+              InfoStatus.WAITING;
+            info[stream["user_login"]][stream["id"]]["procs"]?.kill(2);
+            delete info[stream["user_login"]][stream["id"]]["procs"];
+            info[stream["user_login"]][stream["id"]]["game"].push(
+              stream["game_name"]
+            );
+            info[stream["user_login"]][stream["id"]]["changeTime"].push(
+              new Date().getTime() / 1000
+            );
+            continue;
+          }
+
+          if (!isNotChat && isRecording && isNewGame) {
+            info[stream["user_login"]][stream["id"]]["game"].push(
+              stream["game_name"]
+            );
+            info[stream["user_login"]][stream["id"]]["changeTime"].push(
+              new Date().getTime() / 1000
+            );
+            continue;
+          }
+
+          if (
+            !isNotChat &&
+            (isWaiting ||
+              (isDefault &&
+                exceptGames.includes(
+                  info[stream["user_login"]][stream["id"]].game[0]
+                )))
+          ) {
+            info[stream["user_login"]][stream["id"]]["game"].push(
+              stream["game_name"]
+            );
+            info[stream["user_login"]][stream["id"]]["changeTime"].push(
+              new Date().getTime() / 1000
+            );
+            info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
+            info[stream["user_login"]][stream["id"]].fileName.push(
+              info[stream["user_login"]][stream["id"]].fileName[0] +
+                "_" +
+                info[stream["user_login"]][stream["id"]].fileName.length
+            );
+            continue;
+          }
+
+          offlineStreamers = offlineStreamers.filter(
+            (element) => element !== stream["user_login"]
+          );
+          logger.info(stream["user_login"] + " is online");
+        } else {
+          const isExceptGame = exceptGames.includes(stream["game_name"]);
           if (!isExceptGame) {
             isValid = await checkQuality(stream["user_login"], stream["id"]);
             logger.info(
@@ -384,77 +471,78 @@ const checkLive = async () => {
               stream["id"]
             );
           }
-        }
 
-        const isRecording =
-          info[stream["user_login"]][stream["id"]]["status"] ===
-          InfoStatus.RECORDING;
-        const isWaiting =
-          info[stream["user_login"]][stream["id"]]["status"] ===
-          InfoStatus.WAITING;
-
-        const isDefault =
-          info[stream["user_login"]][stream["id"]]["status"] ===
-          InfoStatus.DEFAULT;
-
-        const isNewGame =
-          info[stream["user_login"]][stream["id"]].game.at(-1) !==
-          stream["game_name"];
-
-        if (isValid)
-          info[stream["user_login"]][stream["id"]]["status"] = InfoStatus.READY;
-
-        if (isExceptGame && isRecording) {
-          info[stream["user_login"]][stream["id"]]["status"] =
+          const isRecording =
+            info[stream["user_login"]][stream["id"]]["status"] ===
+            InfoStatus.RECORDING;
+          const isWaiting =
+            info[stream["user_login"]][stream["id"]]["status"] ===
             InfoStatus.WAITING;
-          info[stream["user_login"]][stream["id"]]["procs"]?.kill(2);
-          delete info[stream["user_login"]][stream["id"]]["procs"];
-          info[stream["user_login"]][stream["id"]]["game"].push(
-            stream["game_name"]
-          );
-          info[stream["user_login"]][stream["id"]]["changeTime"].push(
-            new Date().getTime() / 1000
-          );
-          continue;
-        }
 
-        if (!isExceptGame && isRecording && isNewGame) {
-          info[stream["user_login"]][stream["id"]]["game"].push(
-            stream["game_name"]
-          );
-          info[stream["user_login"]][stream["id"]]["changeTime"].push(
-            new Date().getTime() / 1000
-          );
-          continue;
-        }
+          const isDefault =
+            info[stream["user_login"]][stream["id"]]["status"] ===
+            InfoStatus.DEFAULT;
 
-        if (
-          !isExceptGame &&
-          (isWaiting ||
-            (isDefault &&
-              exceptGames.includes(
-                info[stream["user_login"]][stream["id"]].game[0]
-              )))
-        ) {
-          info[stream["user_login"]][stream["id"]]["game"].push(
-            stream["game_name"]
-          );
-          info[stream["user_login"]][stream["id"]]["changeTime"].push(
-            new Date().getTime() / 1000
-          );
-          info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
-          info[stream["user_login"]][stream["id"]].fileName.push(
-            info[stream["user_login"]][stream["id"]].fileName[0] +
-              "_" +
-              info[stream["user_login"]][stream["id"]].fileName.length
-          );
-          continue;
-        }
+          const isNewGame =
+            info[stream["user_login"]][stream["id"]].game.at(-1) !==
+            stream["game_name"];
 
-        offlineStreamers = offlineStreamers.filter(
-          (element) => element !== stream["user_login"]
-        );
-        logger.info(stream["user_login"] + " is online");
+          if (isValid)
+            info[stream["user_login"]][stream["id"]]["status"] =
+              InfoStatus.READY;
+
+          if (isExceptGame && isRecording) {
+            info[stream["user_login"]][stream["id"]]["status"] =
+              InfoStatus.WAITING;
+            info[stream["user_login"]][stream["id"]]["procs"]?.kill(2);
+            delete info[stream["user_login"]][stream["id"]]["procs"];
+            info[stream["user_login"]][stream["id"]]["game"].push(
+              stream["game_name"]
+            );
+            info[stream["user_login"]][stream["id"]]["changeTime"].push(
+              new Date().getTime() / 1000
+            );
+            continue;
+          }
+
+          if (!isExceptGame && isRecording && isNewGame) {
+            info[stream["user_login"]][stream["id"]]["game"].push(
+              stream["game_name"]
+            );
+            info[stream["user_login"]][stream["id"]]["changeTime"].push(
+              new Date().getTime() / 1000
+            );
+            continue;
+          }
+
+          if (
+            !isExceptGame &&
+            (isWaiting ||
+              (isDefault &&
+                exceptGames.includes(
+                  info[stream["user_login"]][stream["id"]].game[0]
+                )))
+          ) {
+            info[stream["user_login"]][stream["id"]]["game"].push(
+              stream["game_name"]
+            );
+            info[stream["user_login"]][stream["id"]]["changeTime"].push(
+              new Date().getTime() / 1000
+            );
+            info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
+            info[stream["user_login"]][stream["id"]].fileName.push(
+              info[stream["user_login"]][stream["id"]].fileName[0] +
+                "_" +
+                info[stream["user_login"]][stream["id"]].fileName.length
+            );
+            continue;
+          }
+
+          offlineStreamers = offlineStreamers.filter(
+            (element) => element !== stream["user_login"]
+          );
+          logger.info(stream["user_login"] + " is online");
+        }
       }
       logger.info("start check stream status");
       const vidIdList = [];
@@ -1156,6 +1244,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.post("/except_games", function (req, res) {
+  try {
+    const data = req.body;
+    logger.info("except_games req body: " + JSON.stringify(data));
+    exceptGames = data["exceptGames"].split(",");
+    logger.info("update exceptGames: " + exceptGames);
+    res.status(200).send();
+  } catch (e) {
+    logger.error("error update exceptGames: " + e);
+    res.status(400).send();
+  }
+});
+
+app.post("/except_", function (req, res) {
   try {
     const data = req.body;
     logger.info("except_games req body: " + JSON.stringify(data));

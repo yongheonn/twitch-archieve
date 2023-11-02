@@ -279,7 +279,7 @@ const checkQuality = (id, vidId) => __awaiter(void 0, void 0, void 0, function* 
     return false;
 });
 const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _d;
+    var _d, _e;
     try {
         const option = {
             url: "https://api.twitch.tv/helix/streams?" + stream_url_params,
@@ -295,7 +295,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
             for (const stream of streamList) {
                 const isNew = !(stream["id"] in info[stream["user_login"]]);
                 let isValid = false;
-                const isExceptGame = exceptGames.includes(stream["game_name"]);
+                const isOnlyChatStreamer = config_1.OnlyChat.includes(stream["user_login"]);
                 if (isNew) {
                     info[stream["user_login"]][stream["id"]] = {
                         title: stream["title"],
@@ -311,50 +311,101 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                         num: 0,
                         queueNum: 0,
                     };
+                }
+                if (isOnlyChatStreamer) {
+                    const isNotChat = stream["game_name"] !== "Just Chatting";
+                    if (!isNotChat) {
+                        isValid = yield checkQuality(stream["user_login"], stream["id"]);
+                        winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
+                        info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
+                    }
+                    const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
+                        InfoStatus.RECORDING;
+                    const isWaiting = info[stream["user_login"]][stream["id"]]["status"] ===
+                        InfoStatus.WAITING;
+                    const isDefault = info[stream["user_login"]][stream["id"]]["status"] ===
+                        InfoStatus.DEFAULT;
+                    const isNewGame = info[stream["user_login"]][stream["id"]].game.at(-1) !==
+                        stream["game_name"];
+                    if (isValid)
+                        info[stream["user_login"]][stream["id"]]["status"] =
+                            InfoStatus.READY;
+                    if (isNotChat && isRecording) {
+                        info[stream["user_login"]][stream["id"]]["status"] =
+                            InfoStatus.WAITING;
+                        (_d = info[stream["user_login"]][stream["id"]]["procs"]) === null || _d === void 0 ? void 0 : _d.kill(2);
+                        delete info[stream["user_login"]][stream["id"]]["procs"];
+                        info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
+                        info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
+                        continue;
+                    }
+                    if (!isNotChat && isRecording && isNewGame) {
+                        info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
+                        info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
+                        continue;
+                    }
+                    if (!isNotChat &&
+                        (isWaiting ||
+                            (isDefault &&
+                                exceptGames.includes(info[stream["user_login"]][stream["id"]].game[0])))) {
+                        info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
+                        info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
+                        info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
+                        info[stream["user_login"]][stream["id"]].fileName.push(info[stream["user_login"]][stream["id"]].fileName[0] +
+                            "_" +
+                            info[stream["user_login"]][stream["id"]].fileName.length);
+                        continue;
+                    }
+                    offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);
+                    winston_1.default.info(stream["user_login"] + " is online");
+                }
+                else {
+                    const isExceptGame = exceptGames.includes(stream["game_name"]);
                     if (!isExceptGame) {
                         isValid = yield checkQuality(stream["user_login"], stream["id"]);
                         winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
                         info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
                     }
-                }
-                const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
-                    InfoStatus.RECORDING;
-                const isWaiting = info[stream["user_login"]][stream["id"]]["status"] ===
-                    InfoStatus.WAITING;
-                const isDefault = info[stream["user_login"]][stream["id"]]["status"] ===
-                    InfoStatus.DEFAULT;
-                const isNewGame = info[stream["user_login"]][stream["id"]].game.at(-1) !==
-                    stream["game_name"];
-                if (isValid)
-                    info[stream["user_login"]][stream["id"]]["status"] = InfoStatus.READY;
-                if (isExceptGame && isRecording) {
-                    info[stream["user_login"]][stream["id"]]["status"] =
+                    const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
+                        InfoStatus.RECORDING;
+                    const isWaiting = info[stream["user_login"]][stream["id"]]["status"] ===
                         InfoStatus.WAITING;
-                    (_d = info[stream["user_login"]][stream["id"]]["procs"]) === null || _d === void 0 ? void 0 : _d.kill(2);
-                    delete info[stream["user_login"]][stream["id"]]["procs"];
-                    info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
-                    info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
-                    continue;
+                    const isDefault = info[stream["user_login"]][stream["id"]]["status"] ===
+                        InfoStatus.DEFAULT;
+                    const isNewGame = info[stream["user_login"]][stream["id"]].game.at(-1) !==
+                        stream["game_name"];
+                    if (isValid)
+                        info[stream["user_login"]][stream["id"]]["status"] =
+                            InfoStatus.READY;
+                    if (isExceptGame && isRecording) {
+                        info[stream["user_login"]][stream["id"]]["status"] =
+                            InfoStatus.WAITING;
+                        (_e = info[stream["user_login"]][stream["id"]]["procs"]) === null || _e === void 0 ? void 0 : _e.kill(2);
+                        delete info[stream["user_login"]][stream["id"]]["procs"];
+                        info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
+                        info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
+                        continue;
+                    }
+                    if (!isExceptGame && isRecording && isNewGame) {
+                        info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
+                        info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
+                        continue;
+                    }
+                    if (!isExceptGame &&
+                        (isWaiting ||
+                            (isDefault &&
+                                exceptGames.includes(info[stream["user_login"]][stream["id"]].game[0])))) {
+                        info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
+                        info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
+                        info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
+                        info[stream["user_login"]][stream["id"]].fileName.push(info[stream["user_login"]][stream["id"]].fileName[0] +
+                            "_" +
+                            info[stream["user_login"]][stream["id"]].fileName.length);
+                        continue;
+                    }
+                    offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);
+                    winston_1.default.info(stream["user_login"] + " is online");
                 }
-                if (!isExceptGame && isRecording && isNewGame) {
-                    info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
-                    info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
-                    continue;
-                }
-                if (!isExceptGame &&
-                    (isWaiting ||
-                        (isDefault &&
-                            exceptGames.includes(info[stream["user_login"]][stream["id"]].game[0])))) {
-                    info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
-                    info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
-                    info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
-                    info[stream["user_login"]][stream["id"]].fileName.push(info[stream["user_login"]][stream["id"]].fileName[0] +
-                        "_" +
-                        info[stream["user_login"]][stream["id"]].fileName.length);
-                    continue;
-                }
-                offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);
-                winston_1.default.info(stream["user_login"] + " is online");
             }
             winston_1.default.info("start check stream status");
             const vidIdList = [];
@@ -864,13 +915,13 @@ const enqueue = (id, vidId, length) => {
     winston_1.default.info(id + "_" + vidId + " enqueue");
 };
 process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
+    var _f;
     winston_1.default.info(`exit code : ${code}`);
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
                 info[id][vidId].status = InfoStatus.WAITING;
-                (_e = info[id][vidId].procs) === null || _e === void 0 ? void 0 : _e.kill(2);
+                (_f = info[id][vidId].procs) === null || _f === void 0 ? void 0 : _f.kill(2);
                 delete info[id][vidId].procs;
                 info[id][vidId]["game"].push("서버 프로그램 종료");
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
@@ -896,13 +947,13 @@ process.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 process.once("SIGINT", () => __awaiter(void 0, void 0, void 0, function* () {
-    var _f;
+    var _g;
     winston_1.default.info("You've pressed Ctrl + C on this process.");
     for (const id in info) {
         for (const vidId in info[id]) {
             if (info[id][vidId].status === InfoStatus.RECORDING) {
                 info[id][vidId].status = InfoStatus.WAITING;
-                (_f = info[id][vidId].procs) === null || _f === void 0 ? void 0 : _f.kill(2);
+                (_g = info[id][vidId].procs) === null || _g === void 0 ? void 0 : _g.kill(2);
                 delete info[id][vidId].procs;
                 info[id][vidId]["game"].push("서버 프로그램 종료");
                 info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
@@ -945,6 +996,19 @@ app.get("/", function (req, res) {
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
 app.post("/except_games", function (req, res) {
+    try {
+        const data = req.body;
+        winston_1.default.info("except_games req body: " + JSON.stringify(data));
+        exceptGames = data["exceptGames"].split(",");
+        winston_1.default.info("update exceptGames: " + exceptGames);
+        res.status(200).send();
+    }
+    catch (e) {
+        winston_1.default.error("error update exceptGames: " + e);
+        res.status(400).send();
+    }
+});
+app.post("/except_", function (req, res) {
     try {
         const data = req.body;
         winston_1.default.info("except_games req body: " + JSON.stringify(data));
