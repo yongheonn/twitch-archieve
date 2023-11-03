@@ -362,8 +362,10 @@ const checkLive = async () => {
         let isValid: boolean | undefined = false;
 
         const isOnlyChatStreamer = OnlyChat.includes(stream["user_login"]);
-
-        if (isNew) {
+        
+        if (isOnlyChatStreamer) {
+          const isNotChat = stream["game_name"] !== "Just Chatting";
+          if (isNew) {
           info[stream["user_login"]][stream["id"]] = {
             title: stream["title"],
             game: [stream["game_name"]],
@@ -378,9 +380,7 @@ const checkLive = async () => {
             num: 0,
             queueNum: 0,
           };
-        }
-        if (isOnlyChatStreamer) {
-          const isNotChat = stream["game_name"] !== "Just Chatting";
+        
           if (!isNotChat) {
             isValid = await checkQuality(stream["user_login"], stream["id"]);
             logger.info(
@@ -389,6 +389,7 @@ const checkLive = async () => {
             info[stream["user_login"]][stream["id"]].fileName.push(
               stream["id"]
             );
+          }
           }
           const isRecording =
             info[stream["user_login"]][stream["id"]]["status"] ===
@@ -462,6 +463,22 @@ const checkLive = async () => {
           logger.info(stream["user_login"] + " is online");
         } else {
           const isExceptGame = exceptGames.includes(stream["game_name"]);
+          if (isNew) {
+          info[stream["user_login"]][stream["id"]] = {
+            title: stream["title"],
+            game: [stream["game_name"]],
+            changeTime: [new Date().getTime() / 1000],
+            queueTime: undefined,
+            quality: quality,
+            status: InfoStatus.DEFAULT,
+            fileName: [],
+            pat: undefined,
+            patCheck: 0,
+            procs: undefined,
+            num: 0,
+            queueNum: 0,
+          };
+        
           if (!isExceptGame) {
             isValid = await checkQuality(stream["user_login"], stream["id"]);
             logger.info(
@@ -471,7 +488,7 @@ const checkLive = async () => {
               stream["id"]
             );
           }
-
+          }
           const isRecording =
             info[stream["user_login"]][stream["id"]]["status"] ===
             InfoStatus.RECORDING;
