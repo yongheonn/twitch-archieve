@@ -296,28 +296,28 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 const isNew = !(stream["id"] in info[stream["user_login"]]);
                 let isValid = false;
                 const isOnlyChatStreamer = config_1.OnlyChat.includes(stream["user_login"]);
-                if (isNew) {
-                    info[stream["user_login"]][stream["id"]] = {
-                        title: stream["title"],
-                        game: [stream["game_name"]],
-                        changeTime: [new Date().getTime() / 1000],
-                        queueTime: undefined,
-                        quality: quality,
-                        status: InfoStatus.DEFAULT,
-                        fileName: [],
-                        pat: undefined,
-                        patCheck: 0,
-                        procs: undefined,
-                        num: 0,
-                        queueNum: 0,
-                    };
-                }
                 if (isOnlyChatStreamer) {
                     const isNotChat = stream["game_name"] !== "Just Chatting";
-                    if (!isNotChat) {
-                        isValid = yield checkQuality(stream["user_login"], stream["id"]);
-                        winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
-                        info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
+                    if (isNew) {
+                        info[stream["user_login"]][stream["id"]] = {
+                            title: stream["title"],
+                            game: [stream["game_name"]],
+                            changeTime: [new Date().getTime() / 1000],
+                            queueTime: undefined,
+                            quality: quality,
+                            status: InfoStatus.DEFAULT,
+                            fileName: [],
+                            pat: undefined,
+                            patCheck: 0,
+                            procs: undefined,
+                            num: 0,
+                            queueNum: 0,
+                        };
+                        if (!isNotChat) {
+                            isValid = yield checkQuality(stream["user_login"], stream["id"]);
+                            winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
+                            info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
+                        }
                     }
                     const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
                         InfoStatus.RECORDING;
@@ -361,10 +361,26 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 else {
                     const isExceptGame = exceptGames.includes(stream["game_name"]);
-                    if (!isExceptGame) {
-                        isValid = yield checkQuality(stream["user_login"], stream["id"]);
-                        winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
-                        info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
+                    if (isNew) {
+                        info[stream["user_login"]][stream["id"]] = {
+                            title: stream["title"],
+                            game: [stream["game_name"]],
+                            changeTime: [new Date().getTime() / 1000],
+                            queueTime: undefined,
+                            quality: quality,
+                            status: InfoStatus.DEFAULT,
+                            fileName: [],
+                            pat: undefined,
+                            patCheck: 0,
+                            procs: undefined,
+                            num: 0,
+                            queueNum: 0,
+                        };
+                        if (!isExceptGame) {
+                            isValid = yield checkQuality(stream["user_login"], stream["id"]);
+                            winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
+                            info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
+                        }
                     }
                     const isRecording = info[stream["user_login"]][stream["id"]]["status"] ===
                         InfoStatus.RECORDING;
