@@ -1423,7 +1423,7 @@ app.listen(3000, async function () {
   let streamers;
   if (fs.existsSync(root_path + "streamers.json"))
     streamers = require(root_path + "streamers.json");
-  streamerIds = Object.values(streamers);
+  streamerIds = Object.values(JSON.stringify(streamers));
   logger.info(streamerIds);
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();

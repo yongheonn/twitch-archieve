@@ -1148,7 +1148,7 @@ app.listen(3000, function () {
         let streamers;
         if (fs_1.default.existsSync(root_path + "streamers.json"))
             streamers = require(root_path + "streamers.json");
-        streamerIds = Object.values(streamers);
+        streamerIds = Object.values(JSON.stringify(streamers));
         winston_1.default.info(streamerIds);
         for (const streamer of streamerIds)
             info[streamer] = {};
