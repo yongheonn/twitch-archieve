@@ -1148,8 +1148,8 @@ app.listen(3000, function () {
         let streamers;
         if (fs_1.default.existsSync(root_path + "streamers.json"))
             streamers = require(root_path + "streamers.json");
-        streamerIds = Object.values(JSON.stringify(streamers));
-        winston_1.default.info(streamerIds);
+        winston_1.default.info(JSON.stringify(streamers));
+        streamerIds = Object.values(streamers);
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();
