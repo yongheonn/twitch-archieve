@@ -28,7 +28,7 @@ let stream_url_params = "";
 let errorCount = 0;
 let waitUploading = false;
 let isProcessingQueue = false;
-const streamerIds: string[] = StreamerIds;
+let streamerIds: string[] = StreamerIds;
 let offlineStreamers: string[] = [...streamerIds];
 let info: Info = {};
 let quality = "1080p60";
@@ -362,34 +362,37 @@ const checkLive = async () => {
         let isValid: boolean | undefined = false;
 
         const isOnlyChatStreamer = OnlyChat.includes(stream["user_login"]);
-        
+
         if (isOnlyChatStreamer) {
           const isNotChat = stream["game_name"] !== "Just Chatting";
           if (isNew) {
-          info[stream["user_login"]][stream["id"]] = {
-            title: stream["title"],
-            game: [stream["game_name"]],
-            changeTime: [new Date().getTime() / 1000],
-            queueTime: undefined,
-            quality: quality,
-            status: InfoStatus.DEFAULT,
-            fileName: [],
-            pat: undefined,
-            patCheck: 0,
-            procs: undefined,
-            num: 0,
-            queueNum: 0,
-          };
-        
-          if (!isNotChat) {
-            isValid = await checkQuality(stream["user_login"], stream["id"]);
-            logger.info(
-              stream["user_login"] + "_" + stream["id"] + " quality check done"
-            );
-            info[stream["user_login"]][stream["id"]].fileName.push(
-              stream["id"]
-            );
-          }
+            info[stream["user_login"]][stream["id"]] = {
+              title: stream["title"],
+              game: [stream["game_name"]],
+              changeTime: [new Date().getTime() / 1000],
+              queueTime: undefined,
+              quality: quality,
+              status: InfoStatus.DEFAULT,
+              fileName: [],
+              pat: undefined,
+              patCheck: 0,
+              procs: undefined,
+              num: 0,
+              queueNum: 0,
+            };
+
+            if (!isNotChat) {
+              isValid = await checkQuality(stream["user_login"], stream["id"]);
+              logger.info(
+                stream["user_login"] +
+                  "_" +
+                  stream["id"] +
+                  " quality check done"
+              );
+              info[stream["user_login"]][stream["id"]].fileName.push(
+                stream["id"]
+              );
+            }
           }
           const isRecording =
             info[stream["user_login"]][stream["id"]]["status"] ===
@@ -464,30 +467,33 @@ const checkLive = async () => {
         } else {
           const isExceptGame = exceptGames.includes(stream["game_name"]);
           if (isNew) {
-          info[stream["user_login"]][stream["id"]] = {
-            title: stream["title"],
-            game: [stream["game_name"]],
-            changeTime: [new Date().getTime() / 1000],
-            queueTime: undefined,
-            quality: quality,
-            status: InfoStatus.DEFAULT,
-            fileName: [],
-            pat: undefined,
-            patCheck: 0,
-            procs: undefined,
-            num: 0,
-            queueNum: 0,
-          };
-        
-          if (!isExceptGame) {
-            isValid = await checkQuality(stream["user_login"], stream["id"]);
-            logger.info(
-              stream["user_login"] + "_" + stream["id"] + " quality check done"
-            );
-            info[stream["user_login"]][stream["id"]].fileName.push(
-              stream["id"]
-            );
-          }
+            info[stream["user_login"]][stream["id"]] = {
+              title: stream["title"],
+              game: [stream["game_name"]],
+              changeTime: [new Date().getTime() / 1000],
+              queueTime: undefined,
+              quality: quality,
+              status: InfoStatus.DEFAULT,
+              fileName: [],
+              pat: undefined,
+              patCheck: 0,
+              procs: undefined,
+              num: 0,
+              queueNum: 0,
+            };
+
+            if (!isExceptGame) {
+              isValid = await checkQuality(stream["user_login"], stream["id"]);
+              logger.info(
+                stream["user_login"] +
+                  "_" +
+                  stream["id"] +
+                  " quality check done"
+              );
+              info[stream["user_login"]][stream["id"]].fileName.push(
+                stream["id"]
+              );
+            }
           }
           const isRecording =
             info[stream["user_login"]][stream["id"]]["status"] ===
@@ -1414,6 +1420,10 @@ const temp = () => {
 
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
+  let streamers;
+  if (fs.existsSync(root_path + "streamers.json"))
+    streamers = require(root_path + "streamers.json");
+  streamerIds = Object.values(streamers);
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
   //temp();

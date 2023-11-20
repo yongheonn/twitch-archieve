@@ -29,7 +29,7 @@ let stream_url_params = "";
 let errorCount = 0;
 let waitUploading = false;
 let isProcessingQueue = false;
-const streamerIds = config_1.StreamerIds;
+let streamerIds = config_1.StreamerIds;
 let offlineStreamers = [...streamerIds];
 let info = {};
 let quality = "1080p60";
@@ -315,7 +315,10 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                         };
                         if (!isNotChat) {
                             isValid = yield checkQuality(stream["user_login"], stream["id"]);
-                            winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
+                            winston_1.default.info(stream["user_login"] +
+                                "_" +
+                                stream["id"] +
+                                " quality check done");
                             info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
                         }
                     }
@@ -378,7 +381,10 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                         };
                         if (!isExceptGame) {
                             isValid = yield checkQuality(stream["user_login"], stream["id"]);
-                            winston_1.default.info(stream["user_login"] + "_" + stream["id"] + " quality check done");
+                            winston_1.default.info(stream["user_login"] +
+                                "_" +
+                                stream["id"] +
+                                " quality check done");
                             info[stream["user_login"]][stream["id"]].fileName.push(stream["id"]);
                         }
                     }
@@ -1139,6 +1145,10 @@ const temp = () => {
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
+        let streamers;
+        if (fs_1.default.existsSync(root_path + "streamers.json"))
+            streamers = require(root_path + "streamers.json");
+        streamerIds = Object.values(streamers);
         for (const streamer of streamerIds)
             info[streamer] = {};
         checkVideoList();
