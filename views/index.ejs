@@ -7,6 +7,9 @@
   <body>
     <% for(var streamer of streamerIds){ %>
     <h2><%= streamer %></h2>
+    <button style="margin-left: 30px" onclick="onClickDelete(streamer)">
+      삭제
+    </button>
     <% for(var vidId in info[streamer]) { var vidInfo = info[streamer][vidId] %>
     <h3><%= vidId %></h3>
     <br />
@@ -19,6 +22,9 @@
     <span>상태: <%= statusMessage[vidInfo.status]%></span>
     <br /><br />
     <% } }%>
+    <h2>스트리머</h2>
+    <input type="text" id="addStreamer" value="<%= addedStreamer%>" />
+    <button onclick="onClickAdd()">추가</button>
     <span>error count: <%= errorCount%></span>
     <br />
     <% const utc = resetTime.getTime() + resetTime.getTimezoneOffset() * 60 *
@@ -37,15 +43,36 @@
         "Content-Type": "application/json",
       },
     };
+
+    async function onClickAdd() {
+      const addedStreamer = document.getElementById("addedStreamer").value;
+      option.body = JSON.stringify({ addedStreamer });
+      const response = await fetch(SERVER_ADDRESS + "/add_streamer", option);
+      if (response.status === 200) {
+        alert("성공");
+        location.reload();
+      } else {
+        alert("오류 발생");
+      }
+    }
+
     async function onClickHandler() {
       const exceptGames = document.getElementById("exceptGames").value;
       option.body = JSON.stringify({ exceptGames });
-      const response = await fetch(
-        "http://138.2.37.53:3000/except_games",
-        option
-      );
+      const response = await fetch(SERVER_ADDRESS + "/except_games", option);
       if (response.status === 200) {
         alert("성공");
+      } else {
+        alert("오류 발생");
+      }
+    }
+
+    async function onClickDelete(streamer) {
+      option.body = JSON.stringify({ streamer });
+      const response = await fetch(SERVER_ADDRESS + "/delete_streamer", option);
+      if (response.status === 200) {
+        alert("성공");
+        location.reload();
       } else {
         alert("오류 발생");
       }

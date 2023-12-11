@@ -1,11 +1,9 @@
-import express, { response } from "express";
+import express from "express";
 import request from "request";
 import logger from "./winston";
-import { ChildProcess, exec, spawn } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import fs from "fs";
 import { google } from "googleapis";
-import { Credentials } from "google-auth-library";
-import { start } from "repl";
 import { ffprobe } from "fluent-ffmpeg";
 import {
   ExceptGames,
@@ -14,9 +12,8 @@ import {
   StreamerIds,
   TWITCH_CLIENT_ID,
   TWITCH_SECRET,
+  SERVER_ADDRESS,
 } from "./config";
-import { cli } from "winston/lib/winston/config";
-import { secretmanager } from "googleapis/build/src/apis/secretmanager";
 const youtube = google.youtube("v3");
 
 // Define our constants, you will change these with your own
@@ -37,7 +34,6 @@ let exceptGames = ExceptGames;
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
-const quality_in_title = true; // True인 경우 제목에 품질 정보 추가
 const streamlink_args = [
   "--stream-segment-threads",
   "5",
@@ -1260,11 +1256,44 @@ app.get("/", function (req, res) {
     errorCount: errorCount,
     resetTime: resetTime,
     exceptGames: exceptGames,
+    SERVER_ADDRESS: SERVER_ADDRESS,
   });
 });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+app.post("/add_streamer", function (req, res) {
+  try {
+    const data = req.body;
+    logger.info("add_streamer req body: " + JSON.stringify(data));
+    let added = data["addedStreamer"];
+    info[added] = {};
+    streamerIds.push(added);
+    stream_url_params = createStreamParams(streamerIds);
+    logger.info("added streamer: " + added);
+    res.status(200).send();
+  } catch (e) {
+    logger.error("error add streamer: " + e);
+    res.status(400).send();
+  }
+});
+
+app.post("/delete_streamer", function (req, res) {
+  try {
+    const data = req.body;
+    logger.info("delete_streamer req body: " + JSON.stringify(data));
+    let deleted = data["streamer"];
+    delete info[deleted];
+    streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
+    stream_url_params = createStreamParams(streamerIds);
+    logger.info("deleted streamer: " + deleted);
+    res.status(200).send();
+  } catch (e) {
+    logger.error("error delete streamer: " + e);
+    res.status(400).send();
+  }
+});
 
 app.post("/except_games", function (req, res) {
   try {
@@ -1365,66 +1394,8 @@ const setDefaultResetTime = () => {
   }
 };
 
-const temp = () => {
-  info = {
-    paka9999: {},
-    dopa24: {
-      "40461873783": {
-        title: "러슷흐",
-        game: ["Rust", "서버 프로그램 종료"],
-        changeTime: [1689740732.838, 1689750732.838],
-        queueTime: 0,
-        quality: "1080p60",
-        status: 4,
-        fileName: ["40461873783"],
-        pat: {
-          token: {
-            value:
-              '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"dopa24","channel_id":536083731,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1689741932,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
-            signature: "f7665c9bb07cdcc95a1108e4f6c960316553e3d5",
-            __typename: "PlaybackAccessToken",
-          },
-          expire: 1689741932,
-        },
-        patCheck: 0,
-        num: 1,
-        queueNum: 0,
-      },
-    },
-    pikra10: {
-      "40456487895": {
-        title: "8연패 -> 전승",
-        game: ["Teamfight Tactics", "Warcraft III"],
-        changeTime: [1689559700.026, 1689569916.646],
-        queueTime: 1689573465387,
-        quality: "1080p60",
-        status: 6,
-        fileName: ["40456487895"],
-        pat: {
-          token: {
-            value:
-              '{"adblock":false,"authorization":{"forbidden":false,"reason":""},"blackout_enabled":false,"channel":"pikra10","channel_id":194230187,"chansub":{"restricted_bitrates":["archives"],"view_until":1924905600},"ci_gb":false,"geoblock_reason":"","device_id":null,"expires":1689560900,"extended_history_allowed":false,"game":"","hide_ads":false,"https_required":true,"mature":false,"partner":false,"platform":"web","player_type":"embed","private":{"allowed_to_view":true},"privileged":false,"role":"","server_ads":true,"show_ads":true,"subscriber":false,"turbo":false,"user_id":null,"user_ip":"138.2.37.53","version":2}',
-            signature: "7aeb30c9bcef5d9dc27852da850c24f8c3c89c99",
-            __typename: "PlaybackAccessToken",
-          },
-          expire: 1689560900,
-        },
-        patCheck: 0,
-        num: 1,
-        queueNum: 0,
-      },
-    },
-    aba4647: {},
-  };
-};
-
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
-  let streamers;
-  if (fs.existsSync(root_path + "streamers.json"))
-    streamers = require(root_path + "streamers.json");
-  logger.info(JSON.stringify(streamers));
-  streamerIds = Object.values(streamers);
 
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
