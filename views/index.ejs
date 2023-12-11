@@ -14,12 +14,20 @@
         삭제
       </button>
       <span style="margin-left: 30px">OnlyChat</span>
+      <% if(onlyChatStreamers.includes(streamer)) {%>
       <input
         type="checkbox"
         id="<%= streamer %>"
-        checked="<% onlyChatStreamers.includes(streamer) %>"
+        checked
         onclick="onClickCheck('<%= streamer %>')"
       />
+      <% } else {%>
+      <input
+        type="checkbox"
+        id="<%= streamer %>"
+        onclick="onClickCheck('<%= streamer %>')"
+      />
+      <% }%>
     </h2>
 
     <% for(var vidId in info[streamer]) { var vidInfo = info[streamer][vidId] %>
