@@ -77,9 +77,10 @@
       option.body = JSON.stringify({ streamer });
       const response = await fetch("/delete_streamer", option);
       if (response.status === 200) {
-        const result = response.json();
+        const result = await response.json();
+        const isValid = result.isValid;
         console.log(result);
-        if (true) {
+        if (isValid) {
           alert("성공");
           location.reload();
         } else {
