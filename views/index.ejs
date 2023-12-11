@@ -88,7 +88,7 @@
       }
     }
 
-    async function onClickAdd(streamer) {
+    async function onClickCheck(streamer) {
       const isChecked = document.getElementById(streamer).checked;
       option.body = JSON.stringify({ streamer, isChecked });
       const response = await fetch("/check_only_chat", option);
