@@ -40,8 +40,10 @@
     <br />
     <input type="text" id="exceptGames" value="<%= exceptGames%>" />
     <button onclick="onClickHandler()">변경 저장</button>
+    <input id="SERVER_ADDRESS" hidden />
   </body>
   <script>
+    const SERVER_ADDRESS = document.getElementById("SERVER_ADDRESS").value;
     const option = {
       method: "POST",
       body: "",
