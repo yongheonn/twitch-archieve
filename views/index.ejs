@@ -23,7 +23,7 @@
     <br /><br />
     <% } }%>
     <h2>스트리머</h2>
-    <input type="text" id="addStreamer" value="<%= addedStreamer%>" />
+    <input type="text" id="addStreamer" value="" />
     <button onclick="onClickAdd()">추가</button>
     <span>error count: <%= errorCount%></span>
     <br />
@@ -45,7 +45,7 @@
     };
 
     async function onClickAdd() {
-      const addedStreamer = document.getElementById("addedStreamer").value;
+      const addedStreamer = document.getElementById("addStreamer").value;
       option.body = JSON.stringify({ addedStreamer });
       const response = await fetch(SERVER_ADDRESS + "/add_streamer", option);
       if (response.status === 200) {
