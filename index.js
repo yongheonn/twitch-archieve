@@ -1033,16 +1033,83 @@ app.post("/add_streamer", function (req, res) {
         res.status(400).send();
     }
 });
+const checkStreamerStatus = (streamer) => {
+    var _a;
+    for (const vidId in info[streamer]) {
+        const status = info[streamer][vidId].status;
+        if (status === InfoStatus.RECORDING) {
+            (_a = info[streamer][vidId].procs) === null || _a === void 0 ? void 0 : _a.kill(2);
+            for (const fileName in info[streamer][vidId].fileName)
+                fs_1.default.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
+                    if (err) {
+                        winston_1.default.error(streamer + "_" + fileName + " ts delete error");
+                        throw err;
+                    }
+                    winston_1.default.info(fileName + " is deleted.");
+                });
+        }
+        else if (status === InfoStatus.QUEUE) {
+            if (info[streamer][vidId].num === 1) {
+                fs_1.default.unlink(root_path + streamer + "/" + vidId + "_final.ts", (err) => {
+                    if (err) {
+                        winston_1.default.error(streamer + "_" + vidId + " ts delete error");
+                        throw err;
+                    }
+                    winston_1.default.info(vidId + " is deleted.");
+                });
+            }
+            else {
+                for (let i = 0; i < info[streamer][vidId].num; i++) {
+                    fs_1.default.unlink(root_path +
+                        streamer +
+                        "/" +
+                        vidId +
+                        "_final_" +
+                        i.toString() +
+                        ".ts", (err) => {
+                        if (err) {
+                            winston_1.default.error(streamer +
+                                "/" +
+                                vidId +
+                                "_final_" +
+                                i.toString() +
+                                " ts delete error");
+                            throw err;
+                        }
+                        winston_1.default.info(vidId + "_final_" + i.toString() + " is deleted.");
+                    });
+                }
+            }
+        }
+        else if (status === InfoStatus.WAITING) {
+            for (const fileName in info[streamer][vidId].fileName)
+                fs_1.default.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
+                    if (err) {
+                        winston_1.default.error(streamer + "_" + fileName + " ts delete error");
+                        throw err;
+                    }
+                    winston_1.default.info(fileName + " is deleted.");
+                });
+        }
+        else if (status === InfoStatus.UPLOADING ||
+            status === InfoStatus.MERGING) {
+            return false;
+        }
+    }
+    return true;
+};
 app.post("/delete_streamer", function (req, res) {
     try {
         const data = req.body;
         winston_1.default.info("delete_streamer req body: " + JSON.stringify(data));
         let deleted = data["streamer"];
+        let isValid = checkStreamerStatus(deleted);
         delete info[deleted];
         streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
         stream_url_params = createStreamParams(streamerIds);
         winston_1.default.info("deleted streamer: " + deleted);
-        res.status(200).send();
+        winston_1.default.info("test: " + isValid);
+        res.status(200).send({ isValid: isValid });
     }
     catch (e) {
         winston_1.default.error("error delete streamer: " + e);
