@@ -1102,13 +1102,13 @@ app.post("/delete_streamer", function (req, res) {
     try {
         const data = req.body;
         winston_1.default.info("delete_streamer req body: " + JSON.stringify(data));
-        let deleted = data["streamer"];
-        let isValid = checkStreamerStatus(deleted);
+        const deleted = data["streamer"];
+        const isValid = checkStreamerStatus(deleted);
+        winston_1.default.info("test: " + isValid);
         delete info[deleted];
         streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
         stream_url_params = createStreamParams(streamerIds);
         winston_1.default.info("deleted streamer: " + deleted);
-        winston_1.default.info("test: " + isValid);
         res.status(200).send({ isValid: isValid });
     }
     catch (e) {

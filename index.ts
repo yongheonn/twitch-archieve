@@ -1279,7 +1279,7 @@ app.post("/add_streamer", function (req, res) {
   }
 });
 
-const checkStreamerStatus = (streamer: string): Boolean => {
+const checkStreamerStatus = (streamer: string) => {
   for (const vidId in info[streamer]) {
     const status = info[streamer][vidId].status;
     if (status === InfoStatus.RECORDING) {
@@ -1355,13 +1355,14 @@ app.post("/delete_streamer", function (req, res) {
   try {
     const data = req.body;
     logger.info("delete_streamer req body: " + JSON.stringify(data));
-    let deleted = data["streamer"];
-    let isValid = checkStreamerStatus(deleted);
+    const deleted = data["streamer"];
+    const isValid = checkStreamerStatus(deleted);
+    logger.info("test: " + isValid);
     delete info[deleted];
     streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
     stream_url_params = createStreamParams(streamerIds);
     logger.info("deleted streamer: " + deleted);
-    logger.info("test: " + isValid);
+
     res.status(200).send({ isValid: isValid });
   } catch (e) {
     logger.error("error delete streamer: " + e);
