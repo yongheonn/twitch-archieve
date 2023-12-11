@@ -29,8 +29,6 @@ let stream_url_params = "";
 let errorCount = 0;
 let waitUploading = false;
 let isProcessingQueue = false;
-let streamerIds;
-let offlineStreamers;
 let info = {};
 let quality = "1080p60";
 let resetTime = new Date();
@@ -126,10 +124,11 @@ const revokeToken = () => __awaiter(void 0, void 0, void 0, function* () {
         winston_1.default.info(response.errored);
     }
 });
-const createStreamParams = (streamerIds) => {
-    let params = "user_login=" + streamerIds[0];
-    for (let i = 0; i < streamerIds.length; i++)
-        params += "&user_login=" + streamerIds[i];
+const createStreamParams = () => {
+    let params = "";
+    for (const streamerId in info) {
+        params += "&user_login=" + streamerId;
+    }
     return params.slice(1);
 };
 const qualityParser = (m3u8) => {
@@ -287,7 +286,6 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 "Client-Id": clientId,
             },
         };
-        offlineStreamers = [...streamerIds];
         const response = yield doGetRequest(option);
         if (response && response.statusCode == 200) {
             const streamList = JSON.parse(response.body)["data"];
@@ -358,7 +356,6 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                             info[stream["user_login"]][stream["id"]].fileName.length);
                         continue;
                     }
-                    offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);
                     winston_1.default.info(stream["user_login"] + " is online");
                 }
                 else {
@@ -424,7 +421,6 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                             info[stream["user_login"]][stream["id"]].fileName.length);
                         continue;
                     }
-                    offlineStreamers = offlineStreamers.filter((element) => element !== stream["user_login"]);
                     winston_1.default.info(stream["user_login"] + " is online");
                 }
             }
@@ -432,7 +428,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
             const vidIdList = [];
             for (const stream of streamList)
                 vidIdList.push(stream.id);
-            for (const streamerId of streamerIds) {
+            for (const streamerId in info) {
                 for (const vidId in info[streamerId]) {
                     const isWaiting = info[streamerId][vidId]["status"] === InfoStatus.WAITING;
                     const isDefault = info[streamerId][vidId]["status"] === InfoStatus.DEFAULT;
@@ -502,14 +498,11 @@ const doProcess = () => __awaiter(void 0, void 0, void 0, function* () {
                 }
             }
         }
-        if (offlineStreamers) {
-            winston_1.default.info(offlineStreamers + "is offline. Check again in " + refresh + " seconds.");
-            winston_1.default.info("isProcessingQueue: " + isProcessingQueue);
-            if (!isProcessingQueue) {
-                processYoutubeQueue()
-                    .then(() => null)
-                    .catch(() => null);
-            }
+        winston_1.default.info("isProcessingQueue: " + isProcessingQueue);
+        if (!isProcessingQueue) {
+            processYoutubeQueue()
+                .then(() => null)
+                .catch(() => null);
         }
         yield sleep(refresh);
     }
@@ -997,7 +990,6 @@ app.set("index", "./views/index");
 app.get("/", function (req, res) {
     res.render("index", {
         info,
-        streamerIds,
         InfoStatus,
         statusMessage: [
             "온라인",
@@ -1023,8 +1015,7 @@ app.post("/add_streamer", function (req, res) {
         winston_1.default.info("add_streamer req body: " + JSON.stringify(data));
         let added = data["addedStreamer"];
         info[added] = {};
-        streamerIds.push(added);
-        stream_url_params = createStreamParams(streamerIds);
+        stream_url_params = createStreamParams();
         winston_1.default.info("added streamer: " + added);
         res.status(200).send();
     }
@@ -1105,8 +1096,7 @@ app.post("/delete_streamer", function (req, res) {
         const deleted = data["streamer"];
         const isValid = checkStreamerStatus(deleted);
         delete info[deleted];
-        streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
-        stream_url_params = createStreamParams(streamerIds);
+        stream_url_params = createStreamParams();
         winston_1.default.info("deleted streamer: " + deleted);
         res.status(200).send({ isValid: isValid });
     }
@@ -1159,9 +1149,10 @@ app.get("/redirect", function (req, res) {
 });
 */
 const checkVideoList = () => {
-    if (fs_1.default.existsSync(root_path + "info.json"))
+    if (fs_1.default.existsSync(root_path + "info.json")) {
         info = require(root_path + "info.json");
-    winston_1.default.info("success to load info: " + JSON.stringify(info));
+        winston_1.default.info("success to load info: " + JSON.stringify(info));
+    }
 };
 const setDefaultResetTime = () => {
     if (fs_1.default.existsSync(root_path + "reset_time.dat")) {
@@ -1193,15 +1184,13 @@ const setDefaultResetTime = () => {
 app.listen(3000, function () {
     return __awaiter(this, void 0, void 0, function* () {
         winston_1.default.info("Twitch auth sample listening on port 3000!");
-        streamerIds = config_1.StreamerIds;
-        offlineStreamers = [...streamerIds];
-        for (const streamer of streamerIds)
+        for (const streamer of config_1.StreamerIds)
             info[streamer] = {};
         checkVideoList();
         //temp();
         setDefaultResetTime();
         yield getToken();
-        stream_url_params = createStreamParams(streamerIds);
+        stream_url_params = createStreamParams();
         yield doProcess();
     });
 });
