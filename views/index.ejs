@@ -6,10 +6,15 @@
   </head>
   <body>
     <% for(var streamer of streamerIds){ %>
-    <h2><%= streamer %></h2>
-    <button style="margin-left: 30px" onclick="onClickDelete(streamer)">
-      삭제
-    </button>
+    <h2>
+      <%= streamer %><button
+        style="margin-left: 30px"
+        onclick="onClickDelete(streamer)"
+      >
+        삭제
+      </button>
+    </h2>
+
     <% for(var vidId in info[streamer]) { var vidInfo = info[streamer][vidId] %>
     <h3><%= vidId %></h3>
     <br />
@@ -22,9 +27,10 @@
     <span>상태: <%= statusMessage[vidInfo.status]%></span>
     <br /><br />
     <% } }%>
-    <h2>스트리머</h2>
+    <span>스트리머</span>
     <input type="text" id="addStreamer" value="" />
     <button onclick="onClickAdd()">추가</button>
+    <br />
     <span>error count: <%= errorCount%></span>
     <br />
     <% const utc = resetTime.getTime() + resetTime.getTimezoneOffset() * 60 *
