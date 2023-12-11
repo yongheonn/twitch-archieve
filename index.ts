@@ -2,7 +2,7 @@ import express from "express";
 import request from "request";
 import logger from "./winston";
 import { ChildProcess, spawn } from "child_process";
-import fs from "fs";
+import fs, { stat } from "fs";
 import { google } from "googleapis";
 import { ffprobe } from "fluent-ffmpeg";
 import {
@@ -1279,11 +1279,78 @@ app.post("/add_streamer", function (req, res) {
   }
 });
 
+const checkStreamerStatus = (streamer: string) => {
+  for (const vidId in info[streamer]) {
+    const status = info[streamer][vidId].status;
+    if (status === InfoStatus.RECORDING) {
+      info[streamer][vidId].procs?.kill(2);
+      for (const fileName in info[streamer][vidId].fileName)
+        fs.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
+          if (err) {
+            logger.error(streamer + "_" + fileName + " ts delete error");
+            throw err;
+          }
+
+          logger.info(fileName + " is deleted.");
+        });
+    } else if (status === InfoStatus.QUEUE) {
+      if (info[streamer][vidId].num === 1) {
+        fs.unlink(root_path + streamer + "/" + vidId + "_final.ts", (err) => {
+          if (err) {
+            logger.error(streamer + "_" + vidId + " ts delete error");
+            throw err;
+          }
+
+          logger.info(vidId + " is deleted.");
+        });
+      } else {
+        for (let i = 0; i < info[streamer][vidId].num; i++) {
+          fs.unlink(
+            root_path +
+              streamer +
+              "/" +
+              vidId +
+              "_final_" +
+              i.toString() +
+              ".ts",
+            (err) => {
+              if (err) {
+                logger.error(
+                  streamer +
+                    "/" +
+                    vidId +
+                    "_final_" +
+                    i.toString() +
+                    " ts delete error"
+                );
+                throw err;
+              }
+
+              logger.info(vidId + "_final_" + i.toString() + " is deleted.");
+            }
+          );
+        }
+      }
+    } else if (status === InfoStatus.WAITING) {
+      for (const fileName in info[streamer][vidId].fileName)
+        fs.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
+          if (err) {
+            logger.error(streamer + "_" + fileName + " ts delete error");
+            throw err;
+          }
+
+          logger.info(fileName + " is deleted.");
+        });
+    }
+  }
+};
+
 app.post("/delete_streamer", function (req, res) {
   try {
     const data = req.body;
     logger.info("delete_streamer req body: " + JSON.stringify(data));
     let deleted = data["streamer"];
+    checkStreamerStatus(deleted);
     delete info[deleted];
     streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
     stream_url_params = createStreamParams(streamerIds);

@@ -40,10 +40,12 @@
     <br />
     <input type="text" id="exceptGames" value="<%= exceptGames%>" />
     <button onclick="onClickHandler()">변경 저장</button>
-    <input id="SERVER_ADDRESS" hidden />
+    <input id="info" value="<%= info%>" hidden />
+    <input id="InfoStatus" value="<%= InfoStatus%>" hidden />
   </body>
   <script>
-    const SERVER_ADDRESS = document.getElementById("SERVER_ADDRESS").value;
+    const info = document.getElementById("info").value;
+    const InfoStatus = document.getElementById("InfoStatus").value;
     const option = {
       method: "POST",
       body: "",
@@ -55,7 +57,7 @@
     async function onClickAdd() {
       const addedStreamer = document.getElementById("addStreamer").value;
       option.body = JSON.stringify({ addedStreamer });
-      const response = await fetch(SERVER_ADDRESS + "/add_streamer", option);
+      const response = await fetch("/add_streamer", option);
       if (response.status === 200) {
         alert("성공");
         location.reload();
@@ -67,7 +69,7 @@
     async function onClickHandler() {
       const exceptGames = document.getElementById("exceptGames").value;
       option.body = JSON.stringify({ exceptGames });
-      const response = await fetch(SERVER_ADDRESS + "/except_games", option);
+      const response = await fetch("/except_games", option);
       if (response.status === 200) {
         alert("성공");
       } else {
@@ -76,8 +78,17 @@
     }
 
     async function onClickDelete(streamer) {
+      for (const vidId in info[streamer]) {
+        if (
+          info[streamer][vidId].status === InfoStatus.UPLOADING ||
+          info[streamer][vidId].status === InfoStatus.MERGING
+        ) {
+          alert("업로딩이나 처리 과정이 끝난 후에 시도해주세요.");
+          return;
+        }
+      }
       option.body = JSON.stringify({ streamer });
-      const response = await fetch(SERVER_ADDRESS + "/delete_streamer", option);
+      const response = await fetch("/delete_streamer", option);
       if (response.status === 200) {
         alert("성공");
         location.reload();
