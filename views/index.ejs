@@ -40,12 +40,8 @@
     <br />
     <input type="text" id="exceptGames" value="<%= exceptGames%>" />
     <button onclick="onClickHandler()">변경 저장</button>
-    <input id="info" value="<%= info%>" hidden />
-    <input id="InfoStatus" value="<%= InfoStatus%>" hidden />
   </body>
   <script>
-    const info = document.getElementById("info").value;
-    const InfoStatus = document.getElementById("InfoStatus").value;
     const option = {
       method: "POST",
       body: "",
@@ -78,20 +74,15 @@
     }
 
     async function onClickDelete(streamer) {
-      for (const vidId in info[streamer]) {
-        if (
-          info[streamer][vidId].status === InfoStatus.UPLOADING ||
-          info[streamer][vidId].status === InfoStatus.MERGING
-        ) {
-          alert("업로딩이나 처리 과정이 끝난 후에 시도해주세요.");
-          return;
-        }
-      }
       option.body = JSON.stringify({ streamer });
       const response = await fetch("/delete_streamer", option);
       if (response.status === 200) {
-        alert("성공");
-        location.reload();
+        if (response.body.isValid) {
+          alert("성공");
+          location.reload();
+        } else {
+          alert("업로딩이나 처리 과정이 끝난 이후에 시도해주세요.");
+        }
       } else {
         alert("오류 발생");
       }

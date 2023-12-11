@@ -1279,7 +1279,7 @@ app.post("/add_streamer", function (req, res) {
   }
 });
 
-const checkStreamerStatus = (streamer: string) => {
+const checkStreamerStatus = (streamer: string): Boolean => {
   for (const vidId in info[streamer]) {
     const status = info[streamer][vidId].status;
     if (status === InfoStatus.RECORDING) {
@@ -1341,8 +1341,14 @@ const checkStreamerStatus = (streamer: string) => {
 
           logger.info(fileName + " is deleted.");
         });
+    } else if (
+      status === InfoStatus.UPLOADING ||
+      status === InfoStatus.MERGING
+    ) {
+      return false;
     }
   }
+  return true;
 };
 
 app.post("/delete_streamer", function (req, res) {
@@ -1350,12 +1356,12 @@ app.post("/delete_streamer", function (req, res) {
     const data = req.body;
     logger.info("delete_streamer req body: " + JSON.stringify(data));
     let deleted = data["streamer"];
-    checkStreamerStatus(deleted);
+    let isValid = checkStreamerStatus(deleted);
     delete info[deleted];
     streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
     stream_url_params = createStreamParams(streamerIds);
     logger.info("deleted streamer: " + deleted);
-    res.status(200).send();
+    res.status(200).send({ isValid });
   } catch (e) {
     logger.error("error delete streamer: " + e);
     res.status(400).send();
