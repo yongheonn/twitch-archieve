@@ -1361,7 +1361,7 @@ app.post("/delete_streamer", function (req, res) {
     streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
     stream_url_params = createStreamParams(streamerIds);
     logger.info("deleted streamer: " + deleted);
-    res.status(200).send({ isValid });
+    res.status(200).send({ isValid: isValid });
   } catch (e) {
     logger.error("error delete streamer: " + e);
     res.status(400).send();
