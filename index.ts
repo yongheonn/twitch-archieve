@@ -1284,7 +1284,7 @@ const checkStreamerStatus = (streamer: string) => {
     const status = info[streamer][vidId].status;
     if (status === InfoStatus.RECORDING) {
       info[streamer][vidId].procs?.kill(2);
-      for (const fileName in info[streamer][vidId].fileName)
+      for (const fileName of info[streamer][vidId].fileName)
         fs.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
           if (err) {
             logger.error(streamer + "_" + fileName + " ts delete error");
@@ -1332,7 +1332,7 @@ const checkStreamerStatus = (streamer: string) => {
         }
       }
     } else if (status === InfoStatus.WAITING) {
-      for (const fileName in info[streamer][vidId].fileName)
+      for (const fileName of info[streamer][vidId].fileName)
         fs.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
           if (err) {
             logger.error(streamer + "_" + fileName + " ts delete error");
@@ -1357,8 +1357,6 @@ app.post("/delete_streamer", function (req, res) {
     logger.info("delete_streamer req body: " + JSON.stringify(data));
     const deleted = data["streamer"];
     const isValid = checkStreamerStatus(deleted);
-    logger.info("tes123t: ");
-    logger.info("test321: " + isValid);
 
     delete info[deleted];
     streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);

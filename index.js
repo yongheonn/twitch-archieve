@@ -1039,7 +1039,7 @@ const checkStreamerStatus = (streamer) => {
         const status = info[streamer][vidId].status;
         if (status === InfoStatus.RECORDING) {
             (_a = info[streamer][vidId].procs) === null || _a === void 0 ? void 0 : _a.kill(2);
-            for (const fileName in info[streamer][vidId].fileName)
+            for (const fileName of info[streamer][vidId].fileName)
                 fs_1.default.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
                     if (err) {
                         winston_1.default.error(streamer + "_" + fileName + " ts delete error");
@@ -1082,7 +1082,7 @@ const checkStreamerStatus = (streamer) => {
             }
         }
         else if (status === InfoStatus.WAITING) {
-            for (const fileName in info[streamer][vidId].fileName)
+            for (const fileName of info[streamer][vidId].fileName)
                 fs_1.default.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
                     if (err) {
                         winston_1.default.error(streamer + "_" + fileName + " ts delete error");
@@ -1104,8 +1104,6 @@ app.post("/delete_streamer", function (req, res) {
         winston_1.default.info("delete_streamer req body: " + JSON.stringify(data));
         const deleted = data["streamer"];
         const isValid = checkStreamerStatus(deleted);
-        winston_1.default.info("tes123t: ");
-        winston_1.default.info("test321: " + isValid);
         delete info[deleted];
         streamerIds = streamerIds.filter((streamerId) => streamerId !== deleted);
         stream_url_params = createStreamParams(streamerIds);
