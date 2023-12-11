@@ -13,6 +13,13 @@
       >
         삭제
       </button>
+      <span style="margin-left: 30px">OnlyChat</span>
+      <input
+        type="checkbox"
+        id="<%= streamer %>"
+        checked="<%= onlyChatStreamers.includes(streamer) %>"
+        onclick="onClickCheck('<%= streamer %>')"
+      />
     </h2>
 
     <% for(var vidId in info[streamer]) { var vidInfo = info[streamer][vidId] %>
@@ -66,6 +73,17 @@
       const exceptGames = document.getElementById("exceptGames").value;
       option.body = JSON.stringify({ exceptGames });
       const response = await fetch("/except_games", option);
+      if (response.status === 200) {
+        alert("성공");
+      } else {
+        alert("오류 발생");
+      }
+    }
+
+    async function onClickAdd(streamer) {
+      const isChecked = document.getElementById(streamer).checked;
+      option.body = JSON.stringify({ streamer, isChecked });
+      const response = await fetch("/check_only_chat", option);
       if (response.status === 200) {
         alert("성공");
       } else {

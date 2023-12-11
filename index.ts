@@ -29,6 +29,7 @@ let info: Info = {};
 let quality = "1080p60";
 let resetTime = new Date();
 let exceptGames = ExceptGames;
+let onlyChatStreamers = OnlyChat;
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
@@ -356,7 +357,9 @@ const checkLive = async () => {
         const isNew = !(stream["id"] in info[stream["user_login"]]);
         let isValid: boolean | undefined = false;
 
-        const isOnlyChatStreamer = OnlyChat.includes(stream["user_login"]);
+        const isOnlyChatStreamer = onlyChatStreamers.includes(
+          stream["user_login"]
+        );
 
         if (isOnlyChatStreamer) {
           const isNotChat = stream["game_name"] !== "Just Chatting";
@@ -1243,7 +1246,7 @@ app.get("/", function (req, res) {
     errorCount: errorCount,
     resetTime: resetTime,
     exceptGames: exceptGames,
-    SERVER_ADDRESS: SERVER_ADDRESS,
+    onlyChatStreamers: onlyChatStreamers,
   });
 });
 
@@ -1258,6 +1261,23 @@ app.post("/add_streamer", function (req, res) {
     info[added] = {};
     stream_url_params = createStreamParams();
     logger.info("added streamer: " + added);
+    res.status(200).send();
+  } catch (e) {
+    logger.error("error add streamer: " + e);
+    res.status(400).send();
+  }
+});
+
+app.post("/check_only_chat", function (req, res) {
+  try {
+    const data = req.body;
+    logger.info("check_only_chat req body: " + JSON.stringify(data));
+
+    if (onlyChatStreamers.includes(data["streamer"]))
+      onlyChatStreamers = onlyChatStreamers.filter(
+        (streamer) => streamer !== data["streamer"]
+      );
+    else onlyChatStreamers.push(data["streamer"]);
     res.status(200).send();
   } catch (e) {
     logger.error("error add streamer: " + e);
