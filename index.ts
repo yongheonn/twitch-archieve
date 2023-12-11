@@ -25,8 +25,8 @@ let stream_url_params = "";
 let errorCount = 0;
 let waitUploading = false;
 let isProcessingQueue = false;
-let streamerIds: string[] = StreamerIds;
-let offlineStreamers: string[] = [...streamerIds];
+let streamerIds: string[];
+let offlineStreamers: string[];
 let info: Info = {};
 let quality = "1080p60";
 let resetTime = new Date();
@@ -1472,6 +1472,8 @@ const setDefaultResetTime = () => {
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
 
+  streamerIds = StreamerIds;
+  offlineStreamers = [...streamerIds];
   for (const streamer of streamerIds) info[streamer] = {};
   checkVideoList();
   //temp();
