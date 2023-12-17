@@ -130,7 +130,9 @@ const createStreamParams = () => {
     for (const streamerId in info) {
         params += "&user_login=" + streamerId;
     }
-    return params.slice(1);
+    const result = params.slice(1);
+    winston_1.default.info("streamParams: " + result);
+    return result;
 };
 const qualityParser = (m3u8) => {
     const quality = [];
@@ -1015,10 +1017,16 @@ app.post("/add_streamer", function (req, res) {
         const data = req.body;
         winston_1.default.info("add_streamer req body: " + JSON.stringify(data));
         let added = data["addedStreamer"];
-        info[added] = {};
-        stream_url_params = createStreamParams();
-        winston_1.default.info("added streamer: " + added);
-        res.status(200).send();
+        if (added in info) {
+            winston_1.default.info("existed streamer: " + added);
+            res.status(400).send();
+        }
+        else {
+            info[added] = {};
+            stream_url_params = createStreamParams();
+            winston_1.default.info("added streamer: " + added);
+            res.status(200).send();
+        }
     }
     catch (e) {
         winston_1.default.error("error add streamer: " + e);
