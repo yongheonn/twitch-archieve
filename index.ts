@@ -1370,10 +1370,11 @@ app.post("/delete_streamer", function (req, res) {
     const deleted = data["streamer"];
     const isValid = checkStreamerStatus(deleted);
 
-    delete info[deleted];
-    stream_url_params = createStreamParams();
-    logger.info("deleted streamer: " + deleted);
-
+    if (isValid) {
+      delete info[deleted];
+      stream_url_params = createStreamParams();
+      logger.info("deleted streamer: " + deleted);
+    }
     res.status(200).send({ isValid: isValid });
   } catch (e) {
     logger.error("error delete streamer: " + e);
