@@ -743,7 +743,10 @@ const recordStream = (id: string, vidId: string) => {
   info[id][vidId]["procs"]?.stdout?.on("data", (data) => {
     logger.info(data);
   });
-
+  /*
+info: error: Error when reading from stream: Read timeout, exiting
+위의 에러 발생시 프로세스 다시 시작하기 만들기
+*/
   info[id][vidId]["procs"]?.on("exit", async (code) => {
     logger.info(id + " stream is done. status: " + code);
     if (code == 0 || code == 1) {
@@ -1270,6 +1273,38 @@ app.post("/add_streamer", function (req, res) {
     }
   } catch (e) {
     logger.error("error add streamer: " + e);
+    res.status(400).send();
+  }
+});
+
+app.post("/reset_yesterday", function (req, res) {
+  try {
+    resetTime = new Date(
+      resetTime.getFullYear(),
+      resetTime.getMonth(),
+      resetTime.getDate() - 1,
+      7,
+      0
+    );
+    res.status(200).send();
+  } catch (e) {
+    logger.error("error reset yesterday: " + e);
+    res.status(400).send();
+  }
+});
+
+app.post("/reset_tommorow", function (req, res) {
+  try {
+    resetTime = new Date(
+      resetTime.getFullYear(),
+      resetTime.getMonth(),
+      resetTime.getDate() + 1,
+      7,
+      0
+    );
+    res.status(200).send();
+  } catch (e) {
+    logger.error("error reset tommorow: " + e);
     res.status(400).send();
   }
 });

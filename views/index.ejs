@@ -52,6 +52,8 @@
     1000; const KR_TIME_DIFF = 9 * 60 * 60 * 1000; const kr_curr = new Date(utc
     + KR_TIME_DIFF); %>
     <span>유튜브 리셋 시간: <%= kr_curr.toLocaleString()%></span>
+    <button onclick="onClickResetYesterday()">-</button>
+    <button onclick="onClickResetTommorow()">+</button>
     <br />
     <input type="text" id="exceptGames" value="<%= exceptGames%>" />
     <button onclick="onClickHandler()">변경 저장</button>
@@ -69,6 +71,26 @@
       const addedStreamer = document.getElementById("addStreamer").value;
       option.body = JSON.stringify({ addedStreamer });
       const response = await fetch("/add_streamer", option);
+      if (response.status === 200) {
+        alert("성공");
+        location.reload();
+      } else {
+        alert("오류 발생");
+      }
+    }
+
+    async function onClickResetYesterday() {
+      const response = await fetch("/reset_yesterday", option);
+      if (response.status === 200) {
+        alert("성공");
+        location.reload();
+      } else {
+        alert("오류 발생");
+      }
+    }
+
+    async function onClickResetTommorow() {
+      const response = await fetch("/reset_tommorow", option);
       if (response.status === 200) {
         alert("성공");
         location.reload();

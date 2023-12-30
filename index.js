@@ -587,6 +587,10 @@ const recordStream = (id, vidId) => {
     (_b = (_a = info[id][vidId]["procs"]) === null || _a === void 0 ? void 0 : _a.stdout) === null || _b === void 0 ? void 0 : _b.on("data", (data) => {
         winston_1.default.info(data);
     });
+    /*
+  info: error: Error when reading from stream: Read timeout, exiting
+  위의 에러 발생시 프로세스 다시 시작하기 만들기
+  */
     (_c = info[id][vidId]["procs"]) === null || _c === void 0 ? void 0 : _c.on("exit", (code) => __awaiter(void 0, void 0, void 0, function* () {
         winston_1.default.info(id + " stream is done. status: " + code);
         if (code == 0 || code == 1) {
@@ -1030,6 +1034,26 @@ app.post("/add_streamer", function (req, res) {
     }
     catch (e) {
         winston_1.default.error("error add streamer: " + e);
+        res.status(400).send();
+    }
+});
+app.post("/reset_yesterday", function (req, res) {
+    try {
+        resetTime = new Date(resetTime.getFullYear(), resetTime.getMonth(), resetTime.getDate() - 1, 7, 0);
+        res.status(200).send();
+    }
+    catch (e) {
+        winston_1.default.error("error reset yesterday: " + e);
+        res.status(400).send();
+    }
+});
+app.post("/reset_tommorow", function (req, res) {
+    try {
+        resetTime = new Date(resetTime.getFullYear(), resetTime.getMonth(), resetTime.getDate() + 1, 7, 0);
+        res.status(200).send();
+    }
+    catch (e) {
+        winston_1.default.error("error reset tommorow: " + e);
         res.status(400).send();
     }
 });
