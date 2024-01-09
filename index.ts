@@ -1449,6 +1449,9 @@ app.post("/upload_streamer", function (req, res) {
     logger.info("upload_streamer req body: " + JSON.stringify(data));
     const streamer: string = data["uploadStreamer"];
     const uploadId: string = data["uploadId"];
+    if (!(streamer in info)) {
+      info[streamer] = {};
+    }
 
     fs.readdir(root_path + streamer, async function (error, filelist) {
       let finalFile = false; // _final 여부

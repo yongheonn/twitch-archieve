@@ -1187,6 +1187,9 @@ app.post("/upload_streamer", function (req, res) {
         winston_1.default.info("upload_streamer req body: " + JSON.stringify(data));
         const streamer = data["uploadStreamer"];
         const uploadId = data["uploadId"];
+        if (!(streamer in info)) {
+            info[streamer] = {};
+        }
         fs_1.default.readdir(root_path + streamer, function (error, filelist) {
             return __awaiter(this, void 0, void 0, function* () {
                 let finalFile = false; // _final 여부
