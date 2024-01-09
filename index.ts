@@ -1524,10 +1524,10 @@ app.post("/upload_streamer", function (req, res) {
       }
     });
 
-    logger.info("update exceptGames: " + exceptGames);
+    logger.info("upload_streamer: " + streamer + "_" + uploadId);
     res.status(200).send();
   } catch (e) {
-    logger.error("error update exceptGames: " + e);
+    logger.error("error upload_streamer: " + e);
     res.status(400).send();
   }
 });

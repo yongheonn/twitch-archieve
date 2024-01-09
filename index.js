@@ -1265,11 +1265,11 @@ app.post("/upload_streamer", function (req, res) {
                 }
             });
         });
-        winston_1.default.info("update exceptGames: " + exceptGames);
+        winston_1.default.info("upload_streamer: " + streamer + "_" + uploadId);
         res.status(200).send();
     }
     catch (e) {
-        winston_1.default.error("error update exceptGames: " + e);
+        winston_1.default.error("error upload_streamer: " + e);
         res.status(400).send();
     }
 });
