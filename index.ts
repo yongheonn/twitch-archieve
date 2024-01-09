@@ -31,6 +31,7 @@ let resetTime = new Date();
 let exceptGames = ExceptGames;
 let onlyChatStreamers = OnlyChat;
 const refresh = 10; // 스트림을 확인하기 위해 간격(초)을 확인합니다. 소수점을 입력할 수 있습니다
+const backupRefresh = 600;
 const check_max = 20; // 녹음 품질을 확인할 횟수를 설정합니다. 검색횟수 이상의 녹화품질이 없을 경우 품질을 최상으로 변경하세요. 정수를 입력해야 합니다
 const root_path = __dirname + "/"; // 녹화 경로 설정. thr 'r' 문자를 삭제하지 마십시오.
 const streamlink_args = [
@@ -1190,6 +1191,7 @@ process.on("exit", async (code) => {
     root_path + "reset_time.dat",
     resetTime.getTime().toString()
   );
+  fs.writeFileSync(root_path + "check_exit_valid.dat", "valid");
   logger.info(`info.json : ${info}`);
   revokeToken();
   logger.info(`exit process complete`);
@@ -1225,6 +1227,7 @@ process.once("SIGINT", async () => {
     root_path + "reset_time.dat",
     resetTime.getTime().toString()
   );
+  fs.writeFileSync(root_path + "check_exit_valid.dat", "valid");
   logger.info(`info.json : ${info}`);
   revokeToken();
   logger.info(`exit process complete`);
@@ -1567,6 +1570,24 @@ app.get("/redirect", function (req, res) {
 });
 */
 
+const checkExitValid = () => {
+  if (fs.existsSync(root_path + "check_exit_valid.dat")) {
+    const data = fs.readFileSync("check_exit_valid.dat", "utf8");
+    if (data.toString() !== "valid") {
+      for (const id in info) {
+        for (const vidId in info[id]) {
+          if (info[id][vidId].status === InfoStatus.RECORDING) {
+            info[id][vidId].status = InfoStatus.WAITING;
+            delete info[id][vidId].procs;
+            info[id][vidId]["game"].push("서버 프로그램 종료");
+            info[id][vidId]["changeTime"].push(new Date().getTime() / 1000);
+          }
+        }
+      }
+    }
+  }
+};
+
 const checkVideoList = () => {
   if (fs.existsSync(root_path + "info.json")) {
     info = require(root_path + "info.json");
@@ -1623,6 +1644,18 @@ const setDefaultResetTime = () => {
   }
 };
 
+const doBackup = async () => {
+  while (true) {
+    fs.writeFileSync(root_path + "info.json", JSON.stringify(info));
+    fs.writeFileSync(
+      root_path + "reset_time.dat",
+      resetTime.getTime().toString()
+    );
+
+    await sleep(backupRefresh);
+  }
+};
+
 app.listen(3000, async function () {
   logger.info("Twitch auth sample listening on port 3000!");
 
@@ -1633,5 +1666,9 @@ app.listen(3000, async function () {
   setDefaultResetTime();
   await getToken();
   stream_url_params = createStreamParams();
+  checkExitValid();
+  doBackup()
+    .then(() => null)
+    .catch(() => null);
   await doProcess();
 });
