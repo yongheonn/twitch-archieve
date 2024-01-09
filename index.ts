@@ -1584,6 +1584,8 @@ const checkExitValid = () => {
           }
         }
       }
+
+      fs.writeFileSync(root_path + "check_exit_valid.dat", "invalid");
     }
   }
 };
