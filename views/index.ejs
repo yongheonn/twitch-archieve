@@ -57,6 +57,12 @@
     <br />
     <input type="text" id="exceptGames" value="<%= exceptGames%>" />
     <button onclick="onClickHandler()">변경 저장</button>
+    <br />
+    <input type="text" id="uploadStreamer" />
+    <span>_</span>
+    <input type="text" id="uploadId" />
+    <span>Final</span>
+    <button onclick="onClickUpload()">강제 업로딩</button>
   </body>
   <script>
     const option = {
@@ -133,6 +139,19 @@
         } else {
           alert("업로딩이나 처리 과정이 끝난 이후에 시도해주세요.");
         }
+      } else {
+        alert("오류 발생");
+      }
+    }
+
+    async function onClickUpload() {
+      const uploadStreamer = document.getElementById("uploadStreamer").value;
+      const uploadId = document.getElementById("uploadId").value;
+      option.body = JSON.stringify({ uploadStreamer, uploadId });
+      const response = await fetch("/upload_streamer", option);
+      if (response.status === 200) {
+        alert("성공");
+        location.reload();
       } else {
         alert("오류 발생");
       }

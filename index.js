@@ -1181,6 +1181,98 @@ app.post("/except_", function (req, res) {
         res.status(400).send();
     }
 });
+app.post("/upload_streamer", function (req, res) {
+    try {
+        const data = req.body;
+        winston_1.default.info("upload_streamer req body: " + JSON.stringify(data));
+        const streamer = data["uploadStreamer"];
+        const uploadId = data["uploadId"];
+        fs_1.default.readdir(root_path + streamer, function (error, filelist) {
+            return __awaiter(this, void 0, void 0, function* () {
+                let finalFile = false; // _final 여부
+                let finalCount = 0; // _final_ 파일 개수
+                let count = 0; // final이 없는 처리 전 파일 개수
+                /*
+                  _final이 있는데, _final_도 존재하면, 파일 처리 과정에서 용량 제한을 넘어서 에러가 생긴 케이스
+                  그러므로, 따로 처리해줘야함
+                  */
+                for (const file of filelist) {
+                    if (file.search(uploadId) >= 0) {
+                        if (file.search("final_") >= 0) {
+                            finalCount++;
+                        }
+                        else if (file.search("_final") >= 0) {
+                            finalFile = true;
+                        }
+                        else if (file.search(uploadId + "_") >= 0) {
+                            count++;
+                        }
+                    }
+                }
+                if (finalFile) {
+                    info[streamer][uploadId] = {
+                        title: uploadId,
+                        game: ["Unknown"],
+                        changeTime: [new Date().getTime() / 1000],
+                        queueTime: undefined,
+                        quality: "1080p60",
+                        status: InfoStatus.QUEUE,
+                        fileName: [uploadId],
+                        pat: undefined,
+                        patCheck: 0,
+                        procs: undefined,
+                        num: finalCount,
+                        queueNum: 0,
+                    };
+                }
+                else if (finalCount > 0 && finalFile) {
+                    /*
+                    if ( fs.existsSync(root_path + streamer + "/" + uploadId + "_final.ts") ) {
+            
+                      var aStats = fs.statSync(root_path + streamer + "/" + uploadId + "_final.ts")
+                  
+                      const fileSize  = aStats.size / (1024 * 1024 * 1024);
+                  
+                     const freeSize = 140 - fileSize;
+            
+                     if(fileSize / freeSize < 3) {
+            
+                     }
+                  
+                  }
+                  */
+                    // 나중에 구현, 여유공간만큼 비디오를 자르면서 전부 자른 후 업로딩이 아닌, 자른 분량을 업로딩한 후에 하나씩 잘라가면서 업로딩
+                }
+                else if (count > 0) {
+                    info[streamer][uploadId] = {
+                        title: uploadId,
+                        game: ["Unknown"],
+                        changeTime: [new Date().getTime() / 1000],
+                        queueTime: undefined,
+                        quality: "1080p60",
+                        status: InfoStatus.MERGING,
+                        fileName: [uploadId],
+                        pat: undefined,
+                        patCheck: 0,
+                        procs: undefined,
+                        num: 0,
+                        queueNum: 0,
+                    };
+                    for (let i = 1; i < count; i++) {
+                        info[streamer][uploadId].fileName.push(uploadId + "_" + i.toString());
+                    }
+                    yield mergeVideo(streamer, uploadId);
+                }
+            });
+        });
+        winston_1.default.info("update exceptGames: " + exceptGames);
+        res.status(200).send();
+    }
+    catch (e) {
+        winston_1.default.error("error update exceptGames: " + e);
+        res.status(400).send();
+    }
+});
 /*
 app.get("/redirect", function (req, res) {
   let { code, state } = req.query;
