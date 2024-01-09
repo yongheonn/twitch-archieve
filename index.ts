@@ -1470,7 +1470,7 @@ app.post("/upload_streamer", function (req, res) {
         }
       }
 
-      if (finalFile) {
+      if (finalFile && finalCount === 0) {
         info[streamer][uploadId] = {
           title: uploadId,
           game: ["Unknown"],
@@ -1482,7 +1482,7 @@ app.post("/upload_streamer", function (req, res) {
           pat: undefined,
           patCheck: 0,
           procs: undefined,
-          num: finalCount,
+          num: 1,
           queueNum: 0,
         };
       } else if (finalCount > 0 && finalFile) {
@@ -1502,6 +1502,21 @@ app.post("/upload_streamer", function (req, res) {
       }
       */
         // 나중에 구현, 여유공간만큼 비디오를 자르면서 전부 자른 후 업로딩이 아닌, 자른 분량을 업로딩한 후에 하나씩 잘라가면서 업로딩
+      } else if (finalCount > 0 && !finalFile) {
+        info[streamer][uploadId] = {
+          title: uploadId,
+          game: ["Unknown"],
+          changeTime: [new Date().getTime() / 1000],
+          queueTime: undefined,
+          quality: "1080p60",
+          status: InfoStatus.QUEUE,
+          fileName: [uploadId],
+          pat: undefined,
+          patCheck: 0,
+          procs: undefined,
+          num: finalCount,
+          queueNum: 0,
+        };
       } else if (count > 0) {
         info[streamer][uploadId] = {
           title: uploadId,
