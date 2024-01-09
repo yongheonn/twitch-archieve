@@ -1196,6 +1196,7 @@ app.post("/upload_streamer", function (req, res) {
         fs_1.default.readdir(root_path + streamer, function (error, filelist) {
             return __awaiter(this, void 0, void 0, function* () {
                 let finalFile = false; // _final 여부
+                let isFile = false; // 파일 자체 여부
                 let finalCount = 0; // _final_ 파일 개수
                 let count = 0; // final이 없는 처리 전 파일 개수
                 /*
@@ -1204,6 +1205,7 @@ app.post("/upload_streamer", function (req, res) {
                   */
                 for (const file of filelist) {
                     if (file.search(uploadId) >= 0) {
+                        isFile = true;
                         if (file.search("final_") >= 0) {
                             finalCount++;
                         }
@@ -1265,7 +1267,7 @@ app.post("/upload_streamer", function (req, res) {
                         queueNum: 0,
                     };
                 }
-                else if (count > 0) {
+                else if (isFile) {
                     info[streamer][uploadId] = {
                         title: uploadId,
                         game: ["Unknown"],
