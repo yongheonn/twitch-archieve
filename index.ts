@@ -1115,7 +1115,7 @@ const youtubeUpload = (id: string, vidId: string, num: number) => {
           now.getMonth(),
           now.getDate() + 1,
           7,
-          0
+          10
         );
       } else {
         resetTime = new Date(
@@ -1123,7 +1123,7 @@ const youtubeUpload = (id: string, vidId: string, num: number) => {
           now.getMonth(),
           now.getDate(),
           7,
-          0
+          10
         );
       }
       waitUploading = false;
@@ -1287,7 +1287,7 @@ app.post("/reset_yesterday", function (req, res) {
       resetTime.getMonth(),
       resetTime.getDate() - 1,
       7,
-      0
+      10
     );
     res.status(200).send();
   } catch (e) {
@@ -1303,7 +1303,7 @@ app.post("/reset_tommorow", function (req, res) {
       resetTime.getMonth(),
       resetTime.getDate() + 1,
       7,
-      0
+      10
     );
     res.status(200).send();
   } catch (e) {
@@ -1381,7 +1381,7 @@ const checkStreamerStatus = (streamer: string) => {
           );
         }
       }
-    } else if (status === InfoStatus.WAITING) {
+    } else if (status === InfoStatus.WAITING || status === InfoStatus.MERGING) {
       for (const fileName of info[streamer][vidId].fileName)
         fs.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
           if (err) {
@@ -1391,10 +1391,7 @@ const checkStreamerStatus = (streamer: string) => {
 
           logger.info(fileName + " is deleted.");
         });
-    } else if (
-      status === InfoStatus.UPLOADING ||
-      status === InfoStatus.MERGING
-    ) {
+    } else if (status === InfoStatus.UPLOADING) {
       return false;
     }
   }
@@ -1612,7 +1609,7 @@ const setDefaultResetTime = () => {
           now.getMonth(),
           now.getDate(),
           7,
-          0
+          10
         );
       } else {
         resetTime = new Date(
@@ -1620,7 +1617,7 @@ const setDefaultResetTime = () => {
           now.getMonth(),
           now.getDate() - 1,
           7,
-          0
+          10
         );
       }
     } else {
@@ -1634,7 +1631,7 @@ const setDefaultResetTime = () => {
         now.getMonth(),
         now.getDate(),
         7,
-        0
+        10
       );
     } else {
       resetTime = new Date(
@@ -1642,7 +1639,7 @@ const setDefaultResetTime = () => {
         now.getMonth(),
         now.getDate() - 1,
         7,
-        0
+        10
       );
     }
   }

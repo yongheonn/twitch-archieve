@@ -895,10 +895,10 @@ const youtubeUpload = (id, vidId, num) => {
             info[id][vidId].status = InfoStatus.QUEUE;
             const now = new Date();
             if (now.getHours() >= 7) {
-                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 0);
+                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 10);
             }
             else {
-                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0);
+                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 10);
             }
             waitUploading = false;
         }
@@ -1042,7 +1042,7 @@ app.post("/add_streamer", function (req, res) {
 });
 app.post("/reset_yesterday", function (req, res) {
     try {
-        resetTime = new Date(resetTime.getFullYear(), resetTime.getMonth(), resetTime.getDate() - 1, 7, 0);
+        resetTime = new Date(resetTime.getFullYear(), resetTime.getMonth(), resetTime.getDate() - 1, 7, 10);
         res.status(200).send();
     }
     catch (e) {
@@ -1052,7 +1052,7 @@ app.post("/reset_yesterday", function (req, res) {
 });
 app.post("/reset_tommorow", function (req, res) {
     try {
-        resetTime = new Date(resetTime.getFullYear(), resetTime.getMonth(), resetTime.getDate() + 1, 7, 0);
+        resetTime = new Date(resetTime.getFullYear(), resetTime.getMonth(), resetTime.getDate() + 1, 7, 10);
         res.status(200).send();
     }
     catch (e) {
@@ -1123,7 +1123,7 @@ const checkStreamerStatus = (streamer) => {
                 }
             }
         }
-        else if (status === InfoStatus.WAITING) {
+        else if (status === InfoStatus.WAITING || status === InfoStatus.MERGING) {
             for (const fileName of info[streamer][vidId].fileName)
                 fs_1.default.unlink(root_path + streamer + "/" + fileName + ".ts", (err) => {
                     if (err) {
@@ -1133,8 +1133,7 @@ const checkStreamerStatus = (streamer) => {
                     winston_1.default.info(fileName + " is deleted.");
                 });
         }
-        else if (status === InfoStatus.UPLOADING ||
-            status === InfoStatus.MERGING) {
+        else if (status === InfoStatus.UPLOADING) {
             return false;
         }
     }
@@ -1345,10 +1344,10 @@ const setDefaultResetTime = () => {
         const now = new Date();
         if (beforeReset.getTime() <= now.getTime()) {
             if (now.getHours() >= 7) {
-                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0);
+                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 10);
             }
             else {
-                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 7, 0);
+                resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 7, 10);
             }
         }
         else {
@@ -1358,10 +1357,10 @@ const setDefaultResetTime = () => {
     else {
         const now = new Date();
         if (now.getHours() >= 7) {
-            resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0);
+            resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 10);
         }
         else {
-            resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 7, 0);
+            resetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 7, 10);
         }
     }
 };
