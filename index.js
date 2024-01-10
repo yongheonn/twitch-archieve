@@ -303,6 +303,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 const isNew = !(stream["id"] in info[stream["user_login"]]);
                 let isValid = false;
                 const isOnlyChatStreamer = onlyChatStreamers.includes(stream["user_login"]);
+                winston_1.default.info("여기?1");
                 if (isOnlyChatStreamer) {
                     const isNotChat = stream["game_name"] !== "Just Chatting";
                     if (isNew) {
@@ -367,6 +368,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                             info[stream["user_login"]][stream["id"]].fileName.length);
                         continue;
                     }
+                    winston_1.default.info("여기?2");
                     infoCopied[stream["user_login"]][stream["id"]] = true;
                     winston_1.default.info(stream["user_login"] + " is online");
                 }
@@ -428,12 +430,14 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                                 exceptGames.includes(info[stream["user_login"]][stream["id"]].game[0])))) {
                         info[stream["user_login"]][stream["id"]]["game"].push(stream["game_name"]);
                         info[stream["user_login"]][stream["id"]]["changeTime"].push(new Date().getTime() / 1000);
+                        winston_1.default.info("여기?3");
                         info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
                         info[stream["user_login"]][stream["id"]].fileName.push(info[stream["user_login"]][stream["id"]].fileName[0] +
                             "_" +
                             info[stream["user_login"]][stream["id"]].fileName.length);
                         continue;
                     }
+                    winston_1.default.info("여기?2");
                     infoCopied[stream["user_login"]][stream["id"]] = true;
                     winston_1.default.info(stream["user_login"] + " is online");
                 }
