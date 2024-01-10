@@ -66,6 +66,15 @@ interface InfoType {
   procs?: ChildProcess;
   num: number;
   queueNum: number;
+  isOnline: boolean;
+}
+
+interface OnlineInfo {
+  [key: string]: OnlineVidInfo; //user_login
+}
+
+interface OnlineVidInfo {
+  [key: string]: boolean; //id
 }
 
 const InfoStatus = {
@@ -352,6 +361,13 @@ const checkLive = async () => {
       },
     };
 
+    const infoCopied: OnlineInfo = {};
+    for (const streamerId in info) {
+      for (const vidId in info[streamerId]) {
+        infoCopied[streamerId][vidId] = false;
+      }
+    }
+
     const response = await doGetRequest(option);
     if (response && response.statusCode == 200) {
       const streamList = JSON.parse(response.body)["data"] as Stream[];
@@ -379,6 +395,7 @@ const checkLive = async () => {
               procs: undefined,
               num: 0,
               queueNum: 0,
+              isOnline: true,
             };
 
             if (!isNotChat) {
@@ -460,6 +477,7 @@ const checkLive = async () => {
             continue;
           }
 
+          infoCopied[stream["user_login"]][stream["id"]] = true;
           logger.info(stream["user_login"] + " is online");
         } else {
           const isExceptGame = exceptGames.includes(stream["game_name"]);
@@ -477,6 +495,7 @@ const checkLive = async () => {
               procs: undefined,
               num: 0,
               queueNum: 0,
+              isOnline: true,
             };
 
             if (!isExceptGame) {
@@ -557,7 +576,7 @@ const checkLive = async () => {
             );
             continue;
           }
-
+          infoCopied[stream["user_login"]][stream["id"]] = true;
           logger.info(stream["user_login"] + " is online");
         }
       }
@@ -566,6 +585,7 @@ const checkLive = async () => {
       for (const stream of streamList) vidIdList.push(stream.id);
       for (const streamerId in info) {
         for (const vidId in info[streamerId]) {
+          info[streamerId][vidId].isOnline = infoCopied[streamerId][vidId];
           const isWaiting =
             info[streamerId][vidId]["status"] === InfoStatus.WAITING;
           const isDefault =
@@ -754,11 +774,28 @@ info: error: Error when reading from stream: Read timeout, exiting
       delete info[id][vidId]["procs"];
 
       delete info[id][vidId].procs;
-      info[id][vidId] = {
-        ...info[id][vidId],
-        status: InfoStatus.MERGING,
-      };
-      await mergeVideo(id, vidId);
+      let check = 0;
+
+      while (check < 3) {
+        if (info[id][vidId].isOnline) {
+          await sleep(10);
+          check++;
+        } else {
+          break;
+        }
+      }
+      if (check === 3) {
+        info[id][vidId].fileName.push(
+          info[id][vidId].fileName[0] + "_" + info[id][vidId].fileName.length
+        );
+        recordStream(id, vidId);
+      } else {
+        info[id][vidId] = {
+          ...info[id][vidId],
+          status: InfoStatus.MERGING,
+        };
+        await mergeVideo(id, vidId);
+      }
     }
   });
 
@@ -1489,6 +1526,7 @@ app.post("/upload_streamer", function (req, res) {
           procs: undefined,
           num: 1,
           queueNum: 0,
+          isOnline: false,
         };
       } else if (finalCount > 0 && finalFile) {
         /*
@@ -1521,6 +1559,7 @@ app.post("/upload_streamer", function (req, res) {
           procs: undefined,
           num: finalCount,
           queueNum: 0,
+          isOnline: false,
         };
       } else if (isFile) {
         info[streamer][uploadId] = {
@@ -1536,6 +1575,7 @@ app.post("/upload_streamer", function (req, res) {
           procs: undefined,
           num: 0,
           queueNum: 0,
+          isOnline: false,
         };
         for (let i = 1; i < count; i++) {
           info[streamer][uploadId].fileName.push(uploadId + "_" + i.toString());

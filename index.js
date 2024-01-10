@@ -290,6 +290,12 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 "Client-Id": clientId,
             },
         };
+        const infoCopied = {};
+        for (const streamerId in info) {
+            for (const vidId in info[streamerId]) {
+                infoCopied[streamerId][vidId] = false;
+            }
+        }
         const response = yield doGetRequest(option);
         if (response && response.statusCode == 200) {
             const streamList = JSON.parse(response.body)["data"];
@@ -313,6 +319,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                             procs: undefined,
                             num: 0,
                             queueNum: 0,
+                            isOnline: true,
                         };
                         if (!isNotChat) {
                             isValid = yield checkQuality(stream["user_login"], stream["id"]);
@@ -360,6 +367,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                             info[stream["user_login"]][stream["id"]].fileName.length);
                         continue;
                     }
+                    infoCopied[stream["user_login"]][stream["id"]] = true;
                     winston_1.default.info(stream["user_login"] + " is online");
                 }
                 else {
@@ -378,6 +386,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                             procs: undefined,
                             num: 0,
                             queueNum: 0,
+                            isOnline: true,
                         };
                         if (!isExceptGame) {
                             isValid = yield checkQuality(stream["user_login"], stream["id"]);
@@ -425,6 +434,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                             info[stream["user_login"]][stream["id"]].fileName.length);
                         continue;
                     }
+                    infoCopied[stream["user_login"]][stream["id"]] = true;
                     winston_1.default.info(stream["user_login"] + " is online");
                 }
             }
@@ -434,6 +444,7 @@ const checkLive = () => __awaiter(void 0, void 0, void 0, function* () {
                 vidIdList.push(stream.id);
             for (const streamerId in info) {
                 for (const vidId in info[streamerId]) {
+                    info[streamerId][vidId].isOnline = infoCopied[streamerId][vidId];
                     const isWaiting = info[streamerId][vidId]["status"] === InfoStatus.WAITING;
                     const isDefault = info[streamerId][vidId]["status"] === InfoStatus.DEFAULT;
                     const isReady = info[streamerId][vidId]["status"] === InfoStatus.READY;
@@ -597,8 +608,24 @@ const recordStream = (id, vidId) => {
         if (code == 0 || code == 1) {
             delete info[id][vidId]["procs"];
             delete info[id][vidId].procs;
-            info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.MERGING });
-            yield mergeVideo(id, vidId);
+            let check = 0;
+            while (check < 3) {
+                if (info[id][vidId].isOnline) {
+                    yield sleep(10);
+                    check++;
+                }
+                else {
+                    break;
+                }
+            }
+            if (check === 3) {
+                info[id][vidId].fileName.push(info[id][vidId].fileName[0] + "_" + info[id][vidId].fileName.length);
+                recordStream(id, vidId);
+            }
+            else {
+                info[id][vidId] = Object.assign(Object.assign({}, info[id][vidId]), { status: InfoStatus.MERGING });
+                yield mergeVideo(id, vidId);
+            }
         }
     }));
     winston_1.default.info(id + " stream recording in session.");
@@ -1230,6 +1257,7 @@ app.post("/upload_streamer", function (req, res) {
                         procs: undefined,
                         num: 1,
                         queueNum: 0,
+                        isOnline: false,
                     };
                 }
                 else if (finalCount > 0 && finalFile) {
@@ -1264,6 +1292,7 @@ app.post("/upload_streamer", function (req, res) {
                         procs: undefined,
                         num: finalCount,
                         queueNum: 0,
+                        isOnline: false,
                     };
                 }
                 else if (isFile) {
@@ -1280,6 +1309,7 @@ app.post("/upload_streamer", function (req, res) {
                         procs: undefined,
                         num: 0,
                         queueNum: 0,
+                        isOnline: false,
                     };
                     for (let i = 1; i < count; i++) {
                         info[streamer][uploadId].fileName.push(uploadId + "_" + i.toString());
