@@ -360,9 +360,9 @@ const checkLive = async () => {
         "Client-Id": clientId,
       },
     };
-
     const infoCopied: OnlineInfo = {};
     for (const streamerId in info) {
+      infoCopied[streamerId] = {};
       for (const vidId in info[streamerId]) {
         infoCopied[streamerId][vidId] = false;
       }
@@ -378,7 +378,6 @@ const checkLive = async () => {
         const isOnlyChatStreamer = onlyChatStreamers.includes(
           stream["user_login"]
         );
-        logger.info("여기?1");
         if (isOnlyChatStreamer) {
           const isNotChat = stream["game_name"] !== "Just Chatting";
           if (isNew) {
@@ -476,7 +475,6 @@ const checkLive = async () => {
             );
             continue;
           }
-          logger.info("여기?2");
           infoCopied[stream["user_login"]][stream["id"]] = true;
           logger.info(stream["user_login"] + " is online");
         } else {
@@ -568,7 +566,6 @@ const checkLive = async () => {
             info[stream["user_login"]][stream["id"]]["changeTime"].push(
               new Date().getTime() / 1000
             );
-            logger.info("여기?3");
             info[stream["user_login"]][stream["id"]].status = InfoStatus.READY;
             info[stream["user_login"]][stream["id"]].fileName.push(
               info[stream["user_login"]][stream["id"]].fileName[0] +
@@ -577,7 +574,6 @@ const checkLive = async () => {
             );
             continue;
           }
-          logger.info("여기?2");
           infoCopied[stream["user_login"]][stream["id"]] = true;
           logger.info(stream["user_login"] + " is online");
         }
