@@ -610,9 +610,9 @@ const recordStream = (id, vidId) => {
             delete info[id][vidId]["procs"];
             delete info[id][vidId].procs;
             let check = 0;
-            while (check < 3) {
+            while (check < 5) {
                 if (info[id][vidId].isOnline) {
-                    yield sleep(10);
+                    yield sleep(refresh);
                     check++;
                 }
                 else {

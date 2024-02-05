@@ -774,9 +774,9 @@ info: error: Error when reading from stream: Read timeout, exiting
       delete info[id][vidId].procs;
       let check = 0;
 
-      while (check < 3) {
+      while (check < 5) {
         if (info[id][vidId].isOnline) {
-          await sleep(10);
+          await sleep(refresh);
           check++;
         } else {
           break;
